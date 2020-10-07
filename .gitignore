@@ -1,6 +1,4 @@
-.Rhistory
-.RData
-.Rproj.user
-.Rbuildignore
+!/.gitignore
+.*
 LICENSE.md
 R/._*
