@@ -8,7 +8,7 @@
 #' @param return_model logical, if TRUE, returns a data.table with fitted values for all model parameters, default = FALSE
 #' @param maxit integer, maximum number of iterations by optim algorithm, default = 1e4
 #'
-#' @return writes the model parameters as .txt file to $base_folder/$dataset_name/$model_name/tmp/model$iteration
+#' @return writes the model parameters as .txt file to $dataset_folder/$model_name/tmp/dg_model_$testset_$iteration
 #' @import data.table
 #' @import Matrix
 #'

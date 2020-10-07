@@ -27,7 +27,7 @@ dg_estimate(
 \item{maxit}{integer, maximum number of iterations by optim algorithm, default = 1e4}
 }
 \value{
-writes the model parameters as .txt file to $base_folder/$dataset_name/$model_name/tmp/model$iteration
+writes the model parameters as .txt file to $dataset_folder/$model_name/tmp/dg_model_$testset_$iteration
 }
 \description{
 Estimate free energies (dG) for a model from a dataset

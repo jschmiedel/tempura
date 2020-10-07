@@ -188,7 +188,6 @@ collect_models <- function(
             avg_model <- best_models[, lapply(.SD, mean), .SDcols = !grepl("^[toci]", names(best_models))]
         } else {
             print("model_averaging parameter not 'median' or 'mean'")
-            break
         }
         # write to file
         if (which_test_set == 0) {

@@ -24,7 +24,7 @@ prepare_dg_model(
 \item{fixed_par}{list of parameters that are being fixed at their starting values for model fitting}
 }
 \value{
-writes a .RData file to $base_folder/#dataset_name/#model_name/parameter_list.RData containing the parlist list with all necessary parameters to compute a specific dG model
+writes a .RData file to $dataset_folder/$model_name/parameter_list.RData containing the parlist list with all necessary parameters to compute a specific dG model
 }
 \description{
 Prepare parameters for a specific dG model

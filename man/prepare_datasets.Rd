@@ -27,7 +27,7 @@ prepare_datasets(
 \item{fitness_scale}{either "lin" or "log"; for "lin", assumes fitness = [0,Inf], with wild-type fitness 1; for "log", assumes fitness = [-Inf, Inf], with wild-type fitness = 0, default = "lin"}
 }
 \value{
-writes a .RData file to $base_folder/#dataset_name/data/fitness_dataset.RData containing the varlist list with all necessary variables to compute dg models for the dataset
+writes a .RData file to $dataset_folder/data/fitness_dataset.RData containing the varlist list with all necessary variables to compute dg models for the dataset
 }
 \description{
 Prepare DiMSum-processed doubledeepPCA datasets for free energy estimation

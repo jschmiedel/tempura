@@ -7,7 +7,7 @@
 #' @param dg_extremes float, lower and upper bounds for dG parameters, default = 15
 #' @param fixed_par list of parameters that are being fixed at their starting values for model fitting
 #'
-#' @return writes a .RData file to $base_folder/#dataset_name/#model_name/parameter_list.RData containing the parlist list with all necessary parameters to compute a specific dG model
+#' @return writes a .RData file to $dataset_folder/$model_name/parameter_list.RData containing the parlist list with all necessary parameters to compute a specific dG model
 #' @import data.table
 #' @export
 prepare_dg_model <- function(
