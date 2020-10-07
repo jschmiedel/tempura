@@ -1,3 +1,6 @@
 .Rhistory
 .RData
 .Rproj.user
+.Rbuildignore
+LICENSE.md
+R/._*
