@@ -63,8 +63,8 @@ dg_model_gr <- function(
             f_dgwt = global_par[grep(paste0("^bf[AB]?", i, "_dgwt"), names(global_par))],
             b_fitwt = global_par[grep(paste0("b", i, "_fitwt"), names(global_par))],
             b_fit0 = global_par[grep(paste0("b", i, "_fit0"), names(global_par))],
-            fitness = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("f", i, "_fitness")],
-            w = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("f", i, "_sigma")],
+            fitness = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("b", i, "_fitness")],
+            w = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("b", i, "_sigma")],
             mutxvar = varlist[["mutxvar"]],
             fitness_scale = varlist[["fitness_scale"]],
             no_folded_states = parlist[["no_folded_states"]]

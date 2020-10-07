@@ -45,7 +45,7 @@ option_list <- list(
   ),
   optparse::make_option(
     opt_str = c("--maxit"),
-    default = 1e4,
+    default = 10000,
     type = "integer"
   )
 )
