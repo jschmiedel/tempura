@@ -4,6 +4,7 @@
 #' @param parlist list with all model parameters
 #' @param varlist list with all variables
 #' @param maxit maximum number of iterations for optim
+#' @param trace_optim logical, if TRUE, shows trace = 3, default: FALSE
 #'
 #' @return returns a model in data.table format
 #' @import data.table
@@ -14,9 +15,15 @@ dg__model_optim <- function(
 	start_par,
 	parlist,
 	varlist,
-  maxit
+  maxit,
+  trace_optim = FALSE
 ){
 
+  if (trace_optim == TRUE) {
+    trace = 3
+  } else {
+    trace = 0
+  }
 	## call optimizer
 	dg_model <- stats::optim(
       par = start_par,
@@ -25,7 +32,7 @@ dg__model_optim <- function(
       method = "L-BFGS-B",
       lower = parlist[["dt_par"]][, lower_bound],
       upper = parlist[["dt_par"]][, upper_bound],
-      control = list(maxit = maxit),
+      control = list(maxit = maxit, trace = trace),
       parlist = parlist,
       varlist = varlist
     )

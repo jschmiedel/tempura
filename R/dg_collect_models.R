@@ -227,11 +227,11 @@ dg_collect_models <- function(
             dt_models <- rbind(dt_models, X)
           }
         }
-
+        print(dt_models[, .N, convergence])
 
         ## calculate mean and sd over bootstraps
-        boot_mean <- dt_models[, lapply(.SD,mean), .SDcols = !grepl("^[toci]", names(dt_models))]
-        boot_sd <- dt_models[, lapply(.SD,stats::sd), .SDcols = !grepl("^[toci]", names(dt_models))]
+        boot_mean <- dt_models[convergence == 0, lapply(.SD,mean), .SDcols = !grepl("^[toci]", names(dt_models))]
+        boot_sd <- dt_models[convergence == 0, lapply(.SD,stats::sd), .SDcols = !grepl("^[toci]", names(dt_models))]
         # long table format
         avg_boot_model <- merge(data.table(parameter = names(boot_mean),
                                             boot_mean = boot_mean[, unlist(.SD)]),
@@ -258,6 +258,7 @@ dg_collect_models <- function(
             ggplot2::geom_point() +
             ggplot2::facet_wrap(type ~ .) +
             ggplot2::expand_limits(y = 0) +
+            ggplot2::scale_y_continuous(trans = "log10") +
             ggplot2::labs(x = "bootstrapped mean", y = "bootstrapped sd")
         ggplot2::ggsave(p,
                 file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg.pdf"),
