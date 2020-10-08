@@ -1,4 +1,4 @@
-#' Predict fitness from dG model
+#' Predict fitness from computed dG model
 #'
 #' @param dg_model0 dG model(s) for which fitness is to be predicted
 #' @param variant_data0 variant_data data.table
@@ -13,7 +13,7 @@
 #' @export
 #'
 
-predict_fitness_from_model <- function(
+dg__fitness_from_model <- function(
     dg_model0,
     variant_data0,
     varlist,

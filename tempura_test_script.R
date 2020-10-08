@@ -8,14 +8,14 @@ load_all()
 dataset_folder = "../doubledeepPCA/dg_models/SH3"
 model_name = "three_state"
 
-prepare_datasets(dataset_folder = dataset_folder,
+dg_prepare_datasets(dataset_folder = dataset_folder,
 	abundancepca_files = c(paste0(dataset_folder, "/data/01a-GRB2_epPCR_stabilityPCA_aa012_thresholded.RData"),
 		paste0(dataset_folder, "/data/01c-GRB2_NM2_stabilityPCA_aa012_thresholded.RData")),
 	bindingpca_files = paste0(dataset_folder, "/data/01b-GRB2_epPCR_bindingPCA_aa012_thresholded.RData"),
 	wt_seq = "TYVQALFDFDPQEDGELGFRRGDFIHVMDNSDPNWWKGACHGQTGMFPRNYVTPVN*"
 )
 
-prepare_dg_model(
+dg_prepare_model(
 	dataset_folder = dataset_folder,
 	model_name = model_name
 )
@@ -30,7 +30,7 @@ for (it in seq(1,21)) {
     )
 }
 
-collect_models(
+dg_collect_models(
     dataset_folder = dataset_folder,
     model_name = model_name
 )

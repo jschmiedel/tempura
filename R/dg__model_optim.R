@@ -10,7 +10,7 @@
 #' @import Matrix
 #' @export
 #'
-dg_model_optim <- function(
+dg__model_optim <- function(
 	start_par,
 	parlist,
 	varlist,
@@ -20,8 +20,8 @@ dg_model_optim <- function(
 	## call optimizer
 	dg_model <- stats::optim(
       par = start_par,
-      fn = dg_model_fn,
-      gr = dg_model_gr,
+      fn = dg__model_fn,
+      gr = dg__model_gr,
       method = "L-BFGS-B",
       lower = parlist[["lower_bounds"]],
       upper = parlist[["upper_bounds"]],

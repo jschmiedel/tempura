@@ -8,7 +8,7 @@
 #' @import Matrix
 #' @export
 #'
-dg_model_fn <- function(
+dg__model_fn <- function(
 	par,
 	parlist,
 	varlist

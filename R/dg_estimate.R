@@ -50,16 +50,14 @@ dg_estimate <- function(
     print(paste0("test set excluded: ", which_test_set))
     print(paste0("iteration: ", iteration))
 
+
+    ## exclude test set variants
     train_set <- varlist[["variant_data"]][, which(test_set != which_test_set)]
     varlist[["variant_data"]] <- varlist[["variant_data"]][train_set]
-
-    ## /test
-    # utils::str(varlist[["varxmut"]])
-    ## /test
-
     varlist[["varxmut"]] <- varlist[["varxmut"]][train_set, ]
     # transpose varxmut matrix
     varlist[["mutxvar"]] <- Matrix::t(varlist[["varxmut"]])
+
 
     ## sample start parameters according to start_par_mean_sd
     start_par <- stats::rnorm(
@@ -68,6 +66,7 @@ dg_estimate <- function(
     	sd = parlist[["start_par_mean_sd"]][, 2]
     )
     names(start_par) <- parlist[["par_names"]]
+
 
     ## fix parameters
     for (i in seq_along(parlist[["fixed_par"]])) {
@@ -81,7 +80,7 @@ dg_estimate <- function(
 
 
     ## call optimzer
-    dg_model <- dg_model_optim(
+    dg_model <- dg__model_optim(
         start_par = start_par,
         parlist = parlist,
         varlist = varlist,
@@ -115,7 +114,6 @@ dg_estimate <- function(
             quote = F,
             row.names = F
     )
-
 
 
     ## return fitted values

@@ -88,7 +88,7 @@ collect_models <- function(
 
 
         ## predictive performance per train/test set
-        X <- predict_fitness_from_model(
+        X <- dg__fitness_from_model(
             variant_data0 = copy(varlist[["variant_data"]]),
             dg_model0 = best_models,
             varlist = varlist,
@@ -180,7 +180,7 @@ collect_models <- function(
 
 
         ## predict fitness with average model parameters
-        X <- predict_fitness_from_model(
+        X <- dg__fitness_from_model(
             dg_model0 = avg_model,
             variant_data0 = copy(varlist[["variant_data"]]),
             varlist = varlist,
