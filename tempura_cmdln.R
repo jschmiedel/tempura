@@ -63,5 +63,13 @@ if (opt$stage == "model") {
     return_model = FALSE,
     maxit = opt$maxit
   )
+} else if (opt$stage == "bootstrap") {
+  dg_bootstrap(
+    dataset_folder = opt$dataset_folder,
+    model_name = opt$model_name,
+    iteration = opt$iteration,
+    return_model = FALSE,
+    maxit = opt$maxit
+  )
 }
 

@@ -43,8 +43,8 @@ dg_bootstrap <- function(
       start_par[names(start_par) == names(parlist[["fixed_par"]])[i]] <- parlist[["fixed_par"]][i]
     }
     # & enforce bounds
-    start_par[start_par < parlist[["lower_bounds"]]] = parlist[["lower_bounds"]][start_par < parlist[["lower_bounds"]]]
-    start_par[start_par > parlist[["upper_bounds"]]] = parlist[["upper_bounds"]][start_par > parlist[["upper_bounds"]]]
+    start_par[start_par < parlist[["dt_par"]][, lower_bound]] = parlist[["dt_par"]][start_par < lower_bound, lower_bound]
+    start_par[start_par > parlist[["dt_par"]][, upper_bound]] = parlist[["dt_par"]][start_par > upper_bound, upper_bound]
 
 
     ## bootstrap variants in dataset
@@ -87,7 +87,7 @@ dg_bootstrap <- function(
         iteration
     )
     names(dg_boot) <- c(
-        parlist[["par_names"]],
+        parlist[["dt_par"]][, parameter],
         "objective",
         "convergence",
         "iteration"

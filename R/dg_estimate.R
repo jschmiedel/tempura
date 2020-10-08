@@ -61,11 +61,11 @@ dg_estimate <- function(
 
     ## sample start parameters according to start_par_mean_sd
     start_par <- stats::rnorm(
-    	nrow(parlist[["start_par_mean_sd"]]),
-    	mean = parlist[["start_par_mean_sd"]][, 1],
-    	sd = parlist[["start_par_mean_sd"]][, 2]
+    	nrow(parlist[["dt_par"]]),
+    	mean = parlist[["dt_par"]][, start_par_mean],
+    	sd = parlist[["dt_par"]][, start_par_sd]
     )
-    names(start_par) <- parlist[["par_names"]]
+    names(start_par) <- parlist[["dt_par"]][, parameter]
 
 
     ## fix parameters
@@ -75,8 +75,8 @@ dg_estimate <- function(
 
 
     ## enforce lower/upper bounds
-    start_par[start_par < parlist[["lower_bounds"]]] = parlist[["lower_bounds"]][start_par < parlist[["lower_bounds"]]]
-    start_par[start_par > parlist[["upper_bounds"]]] = parlist[["upper_bounds"]][start_par > parlist[["upper_bounds"]]]
+    start_par[start_par < parlist[["dt_par"]][, lower_bound]] = parlist[["dt_par"]][start_par < lower_bound, lower_bound]
+    start_par[start_par > parlist[["dt_par"]][, upper_bound]] = parlist[["dt_par"]][start_par > upper_bound, upper_bound]
 
 
     ## call optimzer
@@ -97,7 +97,7 @@ dg_estimate <- function(
         iteration
     )
     names(dg_model) <- c(
-        parlist[["par_names"]],
+        parlist[["dt_par"]][, parameter],
         "objective",
         "convergence",
         "test_set",

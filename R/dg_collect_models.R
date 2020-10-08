@@ -180,7 +180,7 @@ dg_collect_models <- function(
 
         # long table format
         avg_model <- data.table(parameter = names(avg_model), value = avg_model[, unlist(.SD)])
-
+        data.table::setkey(avg_model, parameter)
 
         ## predict fitness with average model parameters
         X <- dg__fitness_from_model(
@@ -270,8 +270,9 @@ dg_collect_models <- function(
         global_pars[grep("fit", parameter), type := "fitness"]
         global_pars[, dataset := strsplit(parameter, "_")[[1]][1], parameter]
 
-        p <- ggplot2::ggplot(global_pars, ggplot2::aes(boot_mean, boot_sd, color = dataset)) +
+        p <- ggplot2::ggplot(global_pars, ggplot2::aes(value, boot_mean, color = dataset)) +
             ggplot2::geom_point() +
+            ggplot2::geom_pointrange(ggplot2::aes(ymin = boot_mean - boot_sd, ymax = boot_mean + boot_sd)) +
             ggplot2::facet_wrap(type ~ ., scales = "free") +
             ggplot2::expand_limits(y = 0) +
             ggplot2::labs(x = "bootstrapped mean", y = "bootstrapped sd")

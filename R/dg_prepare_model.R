@@ -10,7 +10,7 @@
 #' @return writes a .RData file to $dataset_folder/$model_name/parameter_list.RData containing the parlist list with all necessary parameters to compute a specific dG model
 #' @import data.table
 #' @export
-prepare_dg_model <- function(
+dg_prepare_model <- function(
 	dataset_folder,
 	model_name,
 	no_folded_states = 1,
@@ -51,36 +51,37 @@ prepare_dg_model <- function(
 	}
 	b_mut_ddg <- paste0(varlist[["mut_list"]][, mutation], "_b_ddg")
 
-	par_names <- c(f_mut_ddg, b_mut_ddg, f_global, b_global)
+	dt_par <- data.table(parameter = c(f_mut_ddg, b_mut_ddg, f_global, b_global))
 
 
     ## bounds for solver
-    lower_bounds <- rep(-dg_extremes, length(par_names))
-    upper_bounds <- rep(dg_extremes, length(par_names))
+    dt_par[, lower_bound := -dg_extremes]
+    dt_par[, upper_bound := dg_extremes]
     if (varlist[["fitness_scale"]] == "lin") {
-    	lower_bounds[grep("fitwt", par_names)] <- 0.9 #assume wild-type fitness within 10% of expected value
-    	lower_bounds[grep("fit0", par_names)] <- 0
+    	dt_par[grep("fitwt", parameter), lower_bound := 0.9] #assume wild-type fitness within 10% of expected value
+        dt_par[grep("fit0", parameter), lower_bound := 0]
 
-    	upper_bounds[grep("fitwt", par_names)] <- 1.1 #assume wild-type fitness within 10% of expected value
-    	upper_bounds[grep("fit0", par_names)] <- 0.9 #lethal fitness always smaller than fitwt
+        dt_par[grep("fitwt", parameter), upper_bound := 1.1] #assume wild-type fitness within 10% of expected value
+        dt_par[grep("fit0", parameter), upper_bound := 0.9] #lethal fitness always smaller than fitwt
     } else {
-    	lower_bounds[grep("fitwt", par_names)] <- -0.1
-    	lower_bounds[grep("fit0", par_names)] <- -Inf
+    	dt_par[grep("fitwt", parameter), lower_bound := -0.1]
+        dt_par[grep("fit0", parameter), lower_bound := -Inf]
 
-    	upper_bounds[grep("fitwt", par_names)] <- 0.1
-    	upper_bounds[grep("fit0", par_names)] <- -0.1
+        dt_par[grep("fitwt", parameter), upper_bound := 0.1]
+        dt_par[grep("fit0", parameter), upper_bound := -0.1]
     }
 
     ## mean and sd to draw starting parameters values for solver
-    start_par_mean_sd <- matrix(0, nrow = length(par_names), ncol = 2) #all ddg values are not sampled
+    dt_par[, start_par_mean := 0]
+    dt_par[, start_par_sd := 0] #all ddg values are not sampled
     # dgwt values are drawn from N(0, 1)
-    start_par_mean_sd[grep("dgwt", par_names), ] <- rep(c(0, 1), each = length(grep("dgwt", par_names)))
+    dt_par[grep("dgwt", parameter), ':=' (start_par_mean = 0, start_par_sd = 1)]
 
     # fitwt values are drawn from N(fitwt, 0.05)
     if (varlist[["fitness_scale"]] == "lin") {
-    	start_par_mean_sd[grep("fitwt", par_names), ] <- rep(c(1, 0.05), each = length(grep("fitwt", par_names)))
+        dt_par[grep("fitwt", parameter), ':=' (start_par_mean = 1, start_par_sd = 0.05)]
     } else {
-    	start_par_mean_sd[grep("fitwt", par_names), ] <- rep(c(0, 0.05), each = length(grep("fitwt", par_names)))
+        dt_par[grep("fitwt", parameter), ':=' (start_par_mean = 0, start_par_sd = 0.05)]
     }
 
     # fit0 values are drawn from N(mean(lower_half_fitness_distribution), sd(lower_half_fitness_distribution))
@@ -88,21 +89,22 @@ prepare_dg_model <- function(
     	q50 <- varlist[["variant_data"]][,stats::quantile(.SD, 0.5, na.rm = T), .SDcols = paste0("f", i, "_fitness")]
     	mean_q50 <- varlist[["variant_data"]][get(paste0("f", i, "_fitness")) < q50, mean(unlist(.SD)), .SDcols = paste0("f", i, "_fitness")]
     	sd_q50 <- varlist[["variant_data"]][get(paste0("f", i, "_fitness")) < q50, stats::sd(unlist(.SD)), .SDcols = paste0("f", i, "_fitness")]
-    	start_par_mean_sd[grep(paste0("f", i, "_fit0"), par_names), ] <- c(mean_q50, sd_q50)
+        dt_par[grep(paste0("f", i, "_fit0"), parameter), ':=' (start_par_mean = mean_q50, start_par_sd = sd_q50)]
     }
     for (i in 1:varlist[["no_bind_datasets"]]) {
     	q50 <- varlist[["variant_data"]][,stats::quantile(.SD, 0.5, na.rm = T), .SDcols = paste0("b", i, "_fitness")]
     	mean_q50 <- varlist[["variant_data"]][get(paste0("b", i, "_fitness")) < q50, mean(unlist(.SD)), .SDcols = paste0("b", i, "_fitness")]
     	sd_q50 <- varlist[["variant_data"]][get(paste0("b", i, "_fitness")) < q50, stats::sd(unlist(.SD)), .SDcols = paste0("b", i, "_fitness")]
-    	start_par_mean_sd[grep(paste0("b", i, "_fit0"), par_names), ] <- c(mean_q50, sd_q50)
+    	dt_par[grep(paste0("b", i, "_fit0"), parameter), ':=' (start_par_mean = mean_q50, start_par_sd = sd_q50)]
     }
 
 
+    ## key dt_par in alphabetical order of parameter names
+    data.table::setkey(dt_par, parameter)
+
+
     ## collect all parameters
-    parlist <- list(par_names = par_names,
-				lower_bounds = lower_bounds,
-				upper_bounds = upper_bounds,
-				start_par_mean_sd = start_par_mean_sd,
+    parlist <- list(dt_par = dt_par,
 				no_folded_states = no_folded_states,
 				fixed_par = fixed_par)
 

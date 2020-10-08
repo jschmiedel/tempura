@@ -12,7 +12,7 @@
 #' @import data.table
 #' @import Matrix
 #' @export
-prepare_datasets = function(
+dg_prepare_datasets = function(
 	dataset_folder,
 	abundancepca_files,
 	bindingpca_files,
@@ -90,7 +90,6 @@ prepare_datasets = function(
 	    varxmut[i, mut_list[, mutation] %in% x] <- 1
 	  }
 	}
-
 
 
     ## collect all variables

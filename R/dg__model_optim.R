@@ -23,8 +23,8 @@ dg__model_optim <- function(
       fn = dg__model_fn,
       gr = dg__model_gr,
       method = "L-BFGS-B",
-      lower = parlist[["lower_bounds"]],
-      upper = parlist[["upper_bounds"]],
+      lower = parlist[["dt_par"]][, lower_bound],
+      upper = parlist[["dt_par"]][, upper_bound],
       control = list(maxit = maxit),
       parlist = parlist,
       varlist = varlist
