@@ -36,12 +36,18 @@ dg_collect_models(
 )
 
 
-for (it in seq(2,11)) {
+for (it in seq(2,5)) {
     print (it)
     dg_bootstrap(
         dataset_folder = dataset_folder,
         model_name = model_name,
-        maxit = 100
+        iteration = it,
+        maxit = 20
     )
 }
 
+dg_collect_models(
+    dataset_folder = dataset_folder,
+    model_name = model_name,
+    stage = "bootstrap"
+)

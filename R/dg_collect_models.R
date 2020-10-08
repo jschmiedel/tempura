@@ -190,7 +190,7 @@ dg_collect_models <- function(
             parlist = parlist,
             calc_performance = TRUE
         )
-
+        # output Pearson R
         pp <- melt(X[["prediction_performance"]][, .SD, .SDcols = grep("^[fb]", names(X[["prediction_performance"]]))])
         cat("prediction performance of average model: \n", pp[, paste0(variable, " = ", round(value,3), "\n")])
 
@@ -210,6 +210,10 @@ dg_collect_models <- function(
 
     } else if (stage == "bootstrap") {
 
+        ## load initial models
+        load(file = file.path(dataset_folder, model_name, "model_results.RData"))
+
+
         ## collect bootstrapped models
         model_files <- list.files(file.path(dataset_folder, model_name, "tmp"))
         model_files <- model_files[grep("^dg_bootstrap", model_files)]
@@ -222,10 +226,28 @@ dg_collect_models <- function(
           }
         }
 
-        ## plot some basic stuff
+
+        ## calculate mean and sd over bootstraps
+        boot_mean <- dt_models[, lapply(.SD,mean), .SDcols = !grepl("^[toci]", names(dt_models))]
+        boot_sd <- dt_models[, lapply(.SD,stats::sd), .SDcols = !grepl("^[toci]", names(dt_models))]
+        # long table format
+        avg_boot_model <- merge(data.table(parameter = names(boot_mean),
+                                            boot_mean = boot_mean[, unlist(.SD)]),
+                                data.table(parameter = names(boot_sd),
+                                            boot_sd = boot_sd[, unlist(.SD)]), all = T)
+
+        ## add to avg_model table
+        model_results[["avg_model"]] <- merge(model_results[["avg_model"]],
+                                              avg_boot_model,
+                                              by = "parameter",
+                                              all = T)
 
 
-        ## write to file (append to previous table?!)
+        ## write to file (append to previous table)
+        save(model_results,
+          file = file.path(dataset_folder, model_name, "model_results.RData"),
+          quote = F,
+          row.names = F)
 
 
     } else if (stage == "pll") {

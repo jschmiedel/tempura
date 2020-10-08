@@ -34,14 +34,15 @@ dg_bootstrap <- function(
     set.seed(iteration)
 
 
-    ## extract parameters from average dG model
-    start_par <- model_results[["avg_model"]][, unlist(.SD)]
+    ## get parameters from average dG model
+    start_par <- model_results[["avg_model"]][, value]
+    names(start_par) <- model_results[["avg_model"]][, parameter]
 
     # fix parameters (pro forma)
     for (i in seq_along(parlist[["fixed_par"]])) {
       start_par[names(start_par) == names(parlist[["fixed_par"]])[i]] <- parlist[["fixed_par"]][i]
     }
-    # enforce bounds
+    # & enforce bounds
     start_par[start_par < parlist[["lower_bounds"]]] = parlist[["lower_bounds"]][start_par < parlist[["lower_bounds"]]]
     start_par[start_par > parlist[["upper_bounds"]]] = parlist[["upper_bounds"]][start_par > parlist[["upper_bounds"]]]
 
