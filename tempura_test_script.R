@@ -34,3 +34,14 @@ dg_collect_models(
     dataset_folder = dataset_folder,
     model_name = model_name
 )
+
+
+for (it in seq(2,11)) {
+    print (it)
+    dg_bootstrap(
+        dataset_folder = dataset_folder,
+        model_name = model_name,
+        maxit = 100
+    )
+}
+
