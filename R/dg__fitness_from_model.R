@@ -1,11 +1,11 @@
 #' Predict fitness from computed dG model
 #'
-#' @param dg_model0 dG model(s) for which fitness is to be predicted
+#' @param dg_model0 dG model(s) for which fitness is to be predicted, either long or wide format
 #' @param variant_data0 variant_data data.table
 #' @param varlist varlist
 #' @param parlist parlist
 #' @param calc_performance logical, if Pearson's R should be calculated for predicted versus measured fitness, default = FALSE
-#' @param per_testset logical, if TRUE, predicts fitness only for test set variants (dg_model0 needs to contain test_set variable), default = FALSE
+#' @param per_testset logical, if TRUE, predicts fitness only for test set variants (dg_model0 needs to contain test_set variable and is expected to be in wide format), default = FALSE
 #'
 #' @return returns a list with a variant_data data.table with predited fitness values, and a prediction_performance data.table if calc_performance == TRUE
 #' @import data.table
@@ -34,33 +34,26 @@ dg__fitness_from_model <- function(
     if (per_testset == TRUE) {
       variant_data <- variant_data0[test_set == i]
       varxmut <- varlist[["varxmut"]][variant_data0[, which(test_set == i)], ]
-      dg_model <- dg_model0[test_set == i]
+      # cast long
+      dg_model <- data.table(parameter = names(dg_model0), value = dg_model0[test_set == i, unlist(.SD)])
     } else {
       variant_data <- variant_data0
       varxmut <- varlist[["varxmut"]]
-      dg_model <- dg_model0
+      if (nrow(dg_model0) < ncol(dg_model0)) { #wide format -> cast long
+          dg_model <- data.table(parameter = names(dg_model0), value = dg_model0[, unlist(.SD)])
+      } else {
+          dg_model <- dg_model0
+      }
     }
 
 
     ## collect folding ddgs & predict fitness in folding datasets
     if (parlist[["no_folded_states"]] == 1) {
-        # collect
-        f_ddg <- data.table(variant = sapply(X = grep("f_ddg", names(dg_model)),
-                                   FUN = function(X) {strsplit(names(dg_model)[X], "_")[[1]][1]}),
-                  f_ddg = dg_model[, unlist(.SD), .SDcols = grep("f_ddg", names(dg_model))])
-        # calculate ddG per variant
-        f_ddg_var <- list(varxmut %*% f_ddg[, f_ddg])
+        f_ddg_var <- list(varxmut %*% dg_model[grep("f_ddg", parameter), value])
     } else {
-        fA_ddg <- data.table(variant = sapply(X = grep("fA_ddg", names(dg_model)),
-                                   FUN = function(X) {strsplit(names(dg_model)[X], "_")[[1]][1]}),
-                  fA_ddg = dg_model[, unlist(.SD), .SDcols = grep("fA_ddg", names(dg_model))])
-        fB_ddg <- data.table(variant = sapply(X = grep("fB_ddg", names(dg_model)),
-                                   FUN = function(X) {strsplit(names(dg_model)[X], "_")[[1]][1]}),
-                  fB_ddg = dg_model[, unlist(.SD), .SDcols = grep("fB_ddg", names(dg_model))])
-
         f_ddg_var <- list(
-            varxmut %*% fA_ddg[, fA_ddg],
-            varxmut %*% fB_ddg[, fB_ddg]
+            varxmut %*% dg_model[grep("fA_ddg", parameter), value],
+            varxmut %*% dg_model[grep("fB_ddg", parameter), value]
         )
     }
     # predict folding fitness
@@ -68,9 +61,9 @@ dg__fitness_from_model <- function(
         variant_data[, paste0("f", ds, "_pred") := as.numeric(
                 convert_dg2foldingfitness(
                   f_ddg = f_ddg_var,
-                  f_dgwt = dg_model[, unlist(.SD), .SDcols = grep(paste0("^f[AB]?", ds, "_dgwt"), names(dg_model))],
-                  f_fitwt = dg_model[, unlist(.SD), .SDcols = paste0("f", ds, "_fitwt")],
-                  f_fit0 = dg_model[, unlist(.SD), .SDcols = paste0("f", ds, "_fit0")],
+                  f_dgwt = dg_model[grep(paste0("^f[AB]?", ds, "_dgwt"), parameter), value],
+                  f_fitwt = dg_model[grep(paste0("f", ds, "_fitwt"), parameter), value],
+                  f_fit0 = dg_model[grep(paste0("f", ds, "_fit0"), parameter), value],
                   fitness_scale = varlist[["fitness_scale"]],
                   no_folded_states = parlist[["no_folded_states"]]
                 )
@@ -88,19 +81,16 @@ dg__fitness_from_model <- function(
 
 
     ## collect binding ddgs & predict fitness in binding datasets
-    b_ddg <- data.table(variant = sapply(X = grep("b_ddg", names(dg_model)),
-                                   FUN = function(X) {strsplit(names(dg_model)[X], "_")[[1]][1]}),
-                  b_ddg = dg_model[, unlist(.SD), .SDcols = grep("b_ddg", names(dg_model))])
-    b_ddg_var <- varxmut %*% b_ddg[, b_ddg]
+    b_ddg_var <- varxmut %*% dg_model[grep("b_ddg", parameter), value]
     for (ds in 1:varlist[["no_bind_datasets"]]) {
         variant_data[, paste0("b", ds, "_pred") := as.numeric(
                 convert_dg2bindingfitness(
                   b_ddg = b_ddg_var,
                   f_ddg = f_ddg_var,
-                  b_dgwt = dg_model[, unlist(.SD), .SDcols = paste0("b", ds, "_dgwt")],
-                  f_dgwt = dg_model[, unlist(.SD), .SDcols = grep(paste0("^bf[AB]?", ds, "_dgwt"), names(dg_model))],
-                  b_fitwt = dg_model[, unlist(.SD), .SDcols = paste0("b", ds, "_fitwt")],
-                  b_fit0 = dg_model[, unlist(.SD), .SDcols = paste0("b", ds, "_fit0")],
+                  b_dgwt = dg_model[grep(paste0("b", ds, "_dgwt"), parameter), value],
+                  f_dgwt = dg_model[grep(paste0("^bf[AB]?", ds, "_dgwt"), parameter), value],
+                  b_fitwt = dg_model[grep(paste0("b", ds, "_fitwt"), parameter), value],
+                  b_fit0 = dg_model[grep(paste0("b", ds, "_fit0"), parameter), value],
                   fitness_scale = varlist[["fitness_scale"]],
                   no_folded_states = parlist[["no_folded_states"]]
                 )

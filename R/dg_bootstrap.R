@@ -58,7 +58,7 @@ dg_bootstrap <- function(
     ## sample fitness values
     fitval <- grep("fitness", names(variant_data), value = T)
     for (i in fitval) {
-        variant_data[!is.na(get(i)), eval(i) := rnorm(n = .N, mean = unlist(.SD[,1]), sd = unlist(.SD[,2])),
+        variant_data[!is.na(get(i)), eval(i) := stats::rnorm(n = .N, mean = unlist(.SD[,1]), sd = unlist(.SD[,2])),
             .SDcols = c(i, paste0(strsplit(i, "_")[[1]][1], "_sigma"))]
     }
 

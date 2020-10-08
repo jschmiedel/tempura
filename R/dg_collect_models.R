@@ -12,7 +12,7 @@
 #' @export
 #'
 
-collect_models <- function(
+dg_collect_models <- function(
     dataset_folder,
     model_name,
     model_averaging = "median",
@@ -89,8 +89,8 @@ collect_models <- function(
 
         ## predictive performance per train/test set
         X <- dg__fitness_from_model(
-            variant_data0 = copy(varlist[["variant_data"]]),
             dg_model0 = best_models,
+            variant_data0 = copy(varlist[["variant_data"]]),
             varlist = varlist,
             parlist = parlist,
             calc_performance = TRUE,
@@ -178,6 +178,9 @@ collect_models <- function(
             print("model_averaging parameter not 'median' or 'mean'")
         }
 
+        # long table format
+        avg_model <- data.table(parameter = names(avg_model), value = avg_model[, unlist(.SD)])
+
 
         ## predict fitness with average model parameters
         X <- dg__fitness_from_model(
@@ -205,12 +208,19 @@ collect_models <- function(
         ## plot parameter/fitness relationships
 
 
-
-
-
     } else if (stage == "bootstrap") {
-        ## collect bootstrap runs (across averaged parameters, ignoring train/test sets?!)
 
+        ## collect bootstrapped models
+        model_files <- list.files(file.path(dataset_folder, model_name, "tmp"))
+        model_files <- model_files[grep("^dg_bootstrap", model_files)]
+        for (i in 1:length(model_files)) {
+          X = fread(file.path(dataset_folder, model_name, "tmp", model_files[i]))
+          if (i == 1){
+            dt_models <- X
+          } else {
+            dt_models <- rbind(dt_models, X)
+          }
+        }
 
         ## plot some basic stuff
 

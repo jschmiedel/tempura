@@ -14,7 +14,7 @@ dg__fitness_from_model(
 )
 }
 \arguments{
-\item{dg_model0}{dG model(s) for which fitness is to be predicted}
+\item{dg_model0}{dG model(s) for which fitness is to be predicted, either long or wide format}
 
 \item{variant_data0}{variant_data data.table}
 
@@ -24,7 +24,7 @@ dg__fitness_from_model(
 
 \item{calc_performance}{logical, if Pearson's R should be calculated for predicted versus measured fitness, default = FALSE}
 
-\item{per_testset}{logical, if TRUE, predicts fitness only for test set variants (dg_model0 needs to contain test_set variable), default = FALSE}
+\item{per_testset}{logical, if TRUE, predicts fitness only for test set variants (dg_model0 needs to contain test_set variable and is expected to be in wide format), default = FALSE}
 }
 \value{
 returns a list with a variant_data data.table with predited fitness values, and a prediction_performance data.table if calc_performance == TRUE
