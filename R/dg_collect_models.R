@@ -150,7 +150,7 @@ dg_collect_models <- function(
             nrow = ceiling(sqrt(length(plot_list))),
             ncol = ceiling(sqrt(length(plot_list))))
         ggplot2::ggsave(p,
-            file = file.path(dataset_folder, model_name, "results", paste0("prediction_performance_fitness.pdf")),
+            file = file.path(dataset_folder, model_name, "results/prediction_performance_fitness.pdf"),
             width = 6 * ceiling(sqrt(length(plot_list))),
             height = 5 * ceiling(sqrt(length(plot_list))))
 
@@ -164,7 +164,7 @@ dg_collect_models <- function(
                     y = "Pearson's R",
                     title = paste0("average R: ", pp_melt[, .(value = mean(value)), variable][, paste0(variable, " = ", round(value, 3), collapse = ", ")]))
         ggplot2::ggsave(p,
-                file = file.path(dataset_folder, model_name, "results", paste0("prediction_performance_fitness_R.pdf")),
+                file = file.path(dataset_folder, model_name, "results/prediction_performance_fitness_R.pdf"),
                 width = 5,
                 height = 3)
 
@@ -210,7 +210,9 @@ dg_collect_models <- function(
 
     } else if (stage == "bootstrap") {
 
-        ## load initial models
+        # load parlist
+        load(file = file.path(dataset_folder, model_name, "parameter_list.RData"))
+        # load initial models
         load(file = file.path(dataset_folder, model_name, "model_results.RData"))
 
 
@@ -237,10 +239,46 @@ dg_collect_models <- function(
                                             boot_sd = boot_sd[, unlist(.SD)]), all = T)
 
         ## add to avg_model table
-        model_results[["avg_model"]] <- merge(model_results[["avg_model"]],
+        model_results[["avg_model"]] <- merge(model_results[["avg_model"]][,
+                                                    .SD,
+                                                    .SDcols = c("parameter",
+                                                                "value",
+                                                                grep("pll", names(model_results[["avg_model"]])))],
                                               avg_boot_model,
                                               by = "parameter",
                                               all = T)
+
+
+        ## plot mean vs sd
+        # plot ddg parameter values
+        ddg <- model_results[["avg_model"]][grepl("ddg", parameter) & value != 0]
+        ddg[, type := paste0(strsplit(parameter, "_")[[1]][2:3], collapse = "_"), parameter]
+
+        p <- ggplot2::ggplot(ddg, ggplot2::aes(boot_mean, boot_sd)) +
+            ggplot2::geom_point() +
+            ggplot2::facet_wrap(type ~ .) +
+            ggplot2::expand_limits(y = 0) +
+            ggplot2::labs(x = "bootstrapped mean", y = "bootstrapped sd")
+        ggplot2::ggsave(p,
+                file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg.pdf"),
+                width = 4 * ddg[, length(unique(type))] ,
+                height = 4)
+
+        # plot global parameter values
+        global_pars <- model_results[["avg_model"]][!grepl("ddg", parameter)]
+        global_pars[grep("dgwt", parameter), type := "dgwt"]
+        global_pars[grep("fit", parameter), type := "fitness"]
+        global_pars[, dataset := strsplit(parameter, "_")[[1]][1], parameter]
+
+        p <- ggplot2::ggplot(global_pars, ggplot2::aes(boot_mean, boot_sd, color = dataset)) +
+            ggplot2::geom_point() +
+            ggplot2::facet_wrap(type ~ ., scales = "free") +
+            ggplot2::expand_limits(y = 0) +
+            ggplot2::labs(x = "bootstrapped mean", y = "bootstrapped sd")
+        ggplot2::ggsave(p,
+                file = file.path(dataset_folder, model_name, "results/bootstrapped_global_pars.pdf"),
+                width = 10,
+                height = 4)
 
 
         ## write to file (append to previous table)
