@@ -87,18 +87,6 @@ collect_models <- function(
             height = 15)
 
 
-        ## write table of best model per train/test set to file
-        if (which_test_set == 0) {
-            output_file <- file.path(dataset_folder, model_name, "dg_models_alltestsets.txt")
-        } else {
-            output_file <- file.path(dataset_folder, model_name, paste0("dg_models_testset", which_test_set, ".txt"))
-        }
-        utils::write.table(best_models,
-          file = output_file,
-          quote = F,
-          row.names = F)
-
-
         ## predictive performance per train/test set
         X <- predict_fitness_from_model(
             variant_data0 = copy(varlist[["variant_data"]]),
@@ -189,14 +177,6 @@ collect_models <- function(
         } else {
             print("model_averaging parameter not 'median' or 'mean'")
         }
-        # write to file
-        if (which_test_set == 0) {
-            output_file <-
-            utils::write.table(avg_model,
-              file = file.path(dataset_folder, model_name, "dg_model_avg.txt"),
-              quote = F,
-              row.names = F)
-        }
 
 
         ## predict fitness with average model parameters
@@ -210,14 +190,17 @@ collect_models <- function(
 
         pp <- melt(X[["prediction_performance"]][, .SD, .SDcols = grep("^[fb]", names(X[["prediction_performance"]]))])
         cat("prediction performance of average model: \n", pp[, paste0(variable, " = ", round(value,3), "\n")])
-        # write to file
-        variant_data <- X[["variant_data"]]
-        utils::write.table(variant_data,
-              file = file.path(dataset_folder, model_name, "dg_model_avg_predfitness.txt"),
-              quote = F,
-              row.names = F)
 
 
+        ## write models/parameter to RData file
+        model_results = list(best_models = best_models,
+                avg_model = avg_model,
+                variant_data = variant_data)
+
+        save(model_results,
+          file = file.path(dataset_folder, model_name, "model_results.RData"),
+          quote = F,
+          row.names = F)
 
         ## plot parameter/fitness relationships
 
