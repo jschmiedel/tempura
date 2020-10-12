@@ -10,7 +10,9 @@ dg__fitness_from_model(
   varlist,
   parlist,
   calc_performance = FALSE,
-  per_testset = FALSE
+  per_testset = FALSE,
+  overwrite = TRUE,
+  bfit_ddg0 = FALSE
 )
 }
 \arguments{
@@ -25,6 +27,10 @@ dg__fitness_from_model(
 \item{calc_performance}{logical, if Pearson's R should be calculated for predicted versus measured fitness, default = FALSE}
 
 \item{per_testset}{logical, if TRUE, predicts fitness only for test set variants (dg_model0 needs to contain test_set variable and is expected to be in wide format), default = FALSE}
+
+\item{overwrite}{logical, overwrite predicted fitness values if already present in variant_data0?, default = TRUE}
+
+\item{bfit_ddg0}{logical, also calculate binding fitness values assuming folding or binding ddGs are all 0, default = FALSE}
 }
 \value{
 returns a list with a variant_data data.table with predited fitness values, and a prediction_performance data.table if calc_performance == TRUE

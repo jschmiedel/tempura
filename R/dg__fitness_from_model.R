@@ -6,6 +6,8 @@
 #' @param parlist parlist
 #' @param calc_performance logical, if Pearson's R should be calculated for predicted versus measured fitness, default = FALSE
 #' @param per_testset logical, if TRUE, predicts fitness only for test set variants (dg_model0 needs to contain test_set variable and is expected to be in wide format), default = FALSE
+#' @param overwrite logical, overwrite predicted fitness values if already present in variant_data0?, default = TRUE
+#' @param bfit_ddg0 logical, also calculate binding fitness values assuming folding or binding ddGs are all 0, default = FALSE
 #'
 #' @return returns a list with a variant_data data.table with predited fitness values, and a prediction_performance data.table if calc_performance == TRUE
 #' @import data.table
@@ -19,7 +21,9 @@ dg__fitness_from_model <- function(
     varlist,
     parlist,
     calc_performance = FALSE,
-    per_testset = FALSE
+    per_testset = FALSE,
+    overwrite = TRUE,
+    bfit_ddg0 = FALSE
 ) {
 
   if (per_testset == TRUE) {
@@ -58,6 +62,7 @@ dg__fitness_from_model <- function(
     }
     # predict folding fitness
     for (ds in 1:varlist[["no_abd_datasets"]]) {
+      if (overwrite == TRUE | length(grep(paste0("^f", ds, "_pred$"), names(variant_data))) == 0) {
         variant_data[, paste0("f", ds, "_pred") := as.numeric(
                 convert_dg2foldingfitness(
                   f_ddg = f_ddg_var,
@@ -69,20 +74,22 @@ dg__fitness_from_model <- function(
                 )
             )
         ]
+      }
 
         # compute Pearson's R
-        if (calc_performance == TRUE) {
-          prediction_performance[test_set == i,
-            paste0("f", ds) := variant_data[,
-                stats::cor(.SD, use = "na.or.complete")[2,1],
-                .SDcols = grep(paste0("^f", ds, "_[pf]"), names(variant_data))]]
-        }
+      if (calc_performance == TRUE) {
+        prediction_performance[test_set == i,
+          paste0("f", ds) := variant_data[,
+              stats::cor(.SD, use = "na.or.complete")[2,1],
+              .SDcols = grep(paste0("^f", ds, "_[pf]"), names(variant_data))]]
+      }
     }
 
 
     ## collect binding ddgs & predict fitness in binding datasets
     b_ddg_var <- varxmut %*% dg_model[grep("b_ddg", parameter), value]
     for (ds in 1:varlist[["no_bind_datasets"]]) {
+      if (overwrite == TRUE | length(grep(paste0("^b", ds, "_pred$"), names(variant_data))) == 0) {
         variant_data[, paste0("b", ds, "_pred") := as.numeric(
                 convert_dg2bindingfitness(
                   b_ddg = b_ddg_var,
@@ -96,14 +103,56 @@ dg__fitness_from_model <- function(
                 )
             )
         ]
+      }
 
-        if (calc_performance == TRUE) {
-          # compute Pearson's R
-          prediction_performance[test_set == i,
-              paste0("b", ds) := variant_data[,
-                  stats::cor(.SD, use = "na.or.complete")[2,1],
-                  .SDcols = grep(paste0("^b", ds, "_[pf]"), names(variant_data))]]
+      if (bfit_ddg0 == TRUE) {
+        if (overwrite == TRUE | length(grep(paste0("^b", ds, "_pred_bddg0$"), names(variant_data))) == 0) {
+          variant_data[, paste0("b", ds, "_pred_bddg0") := as.numeric(
+              convert_dg2bindingfitness(
+                b_ddg = 0,
+                f_ddg = f_ddg_var,
+                b_dgwt = dg_model[grep(paste0("b", ds, "_dgwt"), parameter), value],
+                f_dgwt = dg_model[grep(paste0("^bf[AB]?", ds, "_dgwt"), parameter), value],
+                b_fitwt = dg_model[grep(paste0("b", ds, "_fitwt"), parameter), value],
+                b_fit0 = dg_model[grep(paste0("b", ds, "_fit0"), parameter), value],
+                fitness_scale = varlist[["fitness_scale"]],
+                no_folded_states = parlist[["no_folded_states"]]
+              )
+            )
+          ]
         }
+
+        if (overwrite == TRUE | length(grep(paste0("^b", ds, "_pred_fddg0$"), names(variant_data))) == 0) {
+
+          if (parlist[["no_folded_states"]] == 1) {
+            x <- list(0)
+          } else {
+            x <- list(0, 0)
+          }
+
+          variant_data[, paste0("b", ds, "_pred_fddg0") := as.numeric(
+              convert_dg2bindingfitness(
+                b_ddg = b_ddg_var,
+                f_ddg = x,
+                b_dgwt = dg_model[grep(paste0("b", ds, "_dgwt"), parameter), value],
+                f_dgwt = dg_model[grep(paste0("^bf[AB]?", ds, "_dgwt"), parameter), value],
+                b_fitwt = dg_model[grep(paste0("b", ds, "_fitwt"), parameter), value],
+                b_fit0 = dg_model[grep(paste0("b", ds, "_fit0"), parameter), value],
+                fitness_scale = varlist[["fitness_scale"]],
+                no_folded_states = parlist[["no_folded_states"]]
+              )
+            )
+          ]
+        }
+      }
+
+      if (calc_performance == TRUE) {
+        # compute Pearson's R
+        prediction_performance[test_set == i,
+            paste0("b", ds) := variant_data[,
+                stats::cor(.SD, use = "na.or.complete")[2,1],
+                .SDcols = grep(paste0("^b", ds, "_[pf]"), names(variant_data))]]
+      }
     }
 
     # collect variant_data subsets

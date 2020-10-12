@@ -48,10 +48,15 @@ dg_collect_models <- function(
           if (i == 1){
             dt_models <- X
           } else {
-            dt_models <- rbind(dt_models, X)
+            if (nrow(X) > 0) {
+                dt_models <- rbind(dt_models, X)
+            } else {
+                print(paste0(model_files[i], " empty!"))
+            }
           }
         }
 
+        print(paste0("collected ", nrow(dt_models), " models"))
 
         ## compare global parameters across all models
         global_pars <- dt_models[,
@@ -227,7 +232,8 @@ dg_collect_models <- function(
             dt_models <- rbind(dt_models, X)
           }
         }
-        print(dt_models[, .N, convergence])
+
+        print(paste0("collected ", nrow(dt_models), " models"))
 
         ## calculate mean and sd over bootstraps
         boot_mean <- dt_models[convergence == 0, lapply(.SD,mean), .SDcols = !grepl("^[toci]", names(dt_models))]
@@ -253,12 +259,20 @@ dg_collect_models <- function(
         # plot ddg parameter values
         ddg <- model_results[["avg_model"]][grepl("ddg", parameter) & value != 0]
         ddg[, type := paste0(strsplit(parameter, "_")[[1]][2:3], collapse = "_"), parameter]
+        if (parlist[["no_folded_states"]] == 1) {
+            ddg[, type := factor(type, levels = c("f_ddg", "b_ddg"))]
+            levels(ddg$type) = c("ddG of folding", "ddG of binding")
+        } else {
+            ddg[, type := factor(type, levels = c("fA_ddg", "fB_ddg", "b_ddg"))]
+            levels(ddg$type) = c("ddG of folding state A", "ddG of folding state B", "ddG of binding")
+        }
+
 
         p <- ggplot2::ggplot(ddg, ggplot2::aes(boot_mean, boot_sd)) +
             ggplot2::geom_point() +
             ggplot2::facet_wrap(type ~ .) +
             ggplot2::expand_limits(y = 0) +
-            ggplot2::scale_y_continuous(trans = "log10") +
+            ggplot2::geom_abline(linetype = 2) +
             ggplot2::labs(x = "bootstrapped mean", y = "bootstrapped sd")
         ggplot2::ggsave(p,
                 file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg.pdf"),
@@ -269,6 +283,9 @@ dg_collect_models <- function(
         global_pars <- model_results[["avg_model"]][!grepl("ddg", parameter)]
         global_pars[grep("dgwt", parameter), type := "dgwt"]
         global_pars[grep("fit", parameter), type := "fitness"]
+        ddg[, type := factor(type, levels = c("dgwt", "fitness"))]
+        levels(ddg$type) = c("dG of wild-type state", "fitness parameters of DMS dataset")
+
         global_pars[, dataset := strsplit(parameter, "_")[[1]][1], parameter]
 
         p <- ggplot2::ggplot(global_pars, ggplot2::aes(value, boot_mean, color = dataset)) +
@@ -276,7 +293,8 @@ dg_collect_models <- function(
             ggplot2::geom_pointrange(ggplot2::aes(ymin = boot_mean - boot_sd, ymax = boot_mean + boot_sd)) +
             ggplot2::facet_wrap(type ~ ., scales = "free") +
             ggplot2::expand_limits(y = 0) +
-            ggplot2::labs(x = "bootstrapped mean", y = "bootstrapped sd")
+            ggplot2::geom_abline(linetype = 2) +
+            ggplot2::labs(x = "initial estimate", y = "bootstrapped estimate")
         ggplot2::ggsave(p,
                 file = file.path(dataset_folder, model_name, "results/bootstrapped_global_pars.pdf"),
                 width = 10,

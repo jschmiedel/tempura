@@ -7,6 +7,7 @@ load_all()
 
 dataset_folder = "../doubledeepPCA/dg_models/SH3"
 model_name = "three_state"
+model_name = "four_state"
 
 dg_prepare_datasets(dataset_folder = dataset_folder,
 	abundancepca_files = c(paste0(dataset_folder, "/data/01a-GRB2_epPCR_stabilityPCA_aa012_thresholded.RData"),
