@@ -8,7 +8,8 @@ dg_basic_analyses(
   dataset_folder,
   model_name,
   color_type = "",
-  max_variants = 3000
+  max_variants = 3000,
+  datasets_ab = c(1, 1)
 )
 }
 \arguments{
@@ -16,9 +17,11 @@ dg_basic_analyses(
 
 \item{model_name}{name of the model that should be computed on the dataset}
 
-\item{color_type}{c("", "residue_type", "ligand_dist", "rsa") how to color variants; any other than the default "" will exclude variants with multiple mutations and the wild-type variant}
+\item{color_type}{variable with which to color variants; can be any column_name from structural_properties file; any other than the default "" will exclude variants with multiple mutations and the wild-type variant}
 
 \item{max_variants}{maximual number of variants to plot, default = 3e3, will be downsampled if # variants > max_variants}
+
+\item{datasets_ab}{index of datasets to use (in case multiple abundance or binding datasets were supplied)}
 }
 \description{
 Produces some basic analyses plots
