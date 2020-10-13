@@ -4,14 +4,21 @@
 \alias{dg_basic_analyses}
 \title{Produces some basic analyses plots}
 \usage{
-dg_basic_analyses(dataset_folder, model_name)
+dg_basic_analyses(
+  dataset_folder,
+  model_name,
+  color_type = "",
+  max_variants = 3000
+)
 }
 \arguments{
 \item{dataset_folder}{absolute path to the dataset folder, is created if non-existent}
 
-\item{model_name}{name of the model that should be computed on the dataset
+\item{model_name}{name of the model that should be computed on the dataset}
 
- @import data.table}
+\item{color_type}{c("", "residue_type", "ligand_dist", "rsa") how to color variants; any other than the default "" will exclude variants with multiple mutations and the wild-type variant}
+
+\item{max_variants}{maximual number of variants to plot, default = 3e3, will be downsampled if # variants > max_variants}
 }
 \description{
 Produces some basic analyses plots
