@@ -10,7 +10,8 @@ dg_estimate(
   which_test_set = 0,
   iteration = 1,
   return_model = FALSE,
-  maxit = 10000
+  maxit = 10000,
+  trace_optim = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ dg_estimate(
 \item{return_model}{logical, if TRUE, returns a data.table with fitted values for all model parameters, default = FALSE}
 
 \item{maxit}{integer, maximum number of iterations by optim algorithm, default = 1e4}
+
+\item{trace_optim}{logical, if TRUE, shows trace = 3, default: FALSE}
 }
 \value{
 writes the model parameters as .txt file to $dataset_folder/$model_name/tmp/dg_model_$testset_$iteration

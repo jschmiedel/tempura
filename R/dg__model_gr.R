@@ -22,13 +22,19 @@ dg__model_gr <- function(
 
   	## precalc ddg vectors
   	if (parlist[["no_folded_states"]] == 1) {
+        f_ddg <- list(par[grep("f_ddg", names(par))])
         f_ddg_var <- list(varlist[["varxmut"]] %*% par[grep("f_ddg", names(par))])
     } else {
+        f_ddg <- list(
+            par[grep("fA_ddg", names(par))],
+            par[grep("fB_ddg", names(par))]
+        )
         f_ddg_var <- list(
             varlist[["varxmut"]] %*% par[grep("fA_ddg", names(par))],
             varlist[["varxmut"]] %*% par[grep("fB_ddg", names(par))]
         )
     }
+    b_ddg <- par[grep("b_ddg", names(par))]
     b_ddg_var <- varlist[["varxmut"]] %*% par[grep("b_ddg", names(par))]
 
 
@@ -40,7 +46,8 @@ dg__model_gr <- function(
     gradient_f = list()
     for (i in 1:varlist[["no_abd_datasets"]]) {
         gradient_f[[i]] <- convert_dg2foldinggradient(
-            f_ddg = f_ddg_var,
+            f_ddg = f_ddg,
+            f_ddg_var = f_ddg_var,
             f_dgwt = global_par[grep(paste0("^f[AB]?", i, "_dgwt"), names(global_par))],
             f_fitwt = global_par[grep(paste0("f", i, "_fitwt"), names(global_par))],
             f_fit0 = global_par[grep(paste0("f", i, "_fit0"), names(global_par))],
@@ -48,7 +55,8 @@ dg__model_gr <- function(
             w = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("f", i, "_sigma")],
             mutxvar = varlist[["mutxvar"]],
             fitness_scale = varlist[["fitness_scale"]],
-            no_folded_states = parlist[["no_folded_states"]]
+            no_folded_states = parlist[["no_folded_states"]],
+            lambda = parlist[["lambda"]]
         )
     }
 
@@ -57,8 +65,10 @@ dg__model_gr <- function(
     gradient_b = list()
     for (i in 1:varlist[["no_bind_datasets"]]) {
         gradient_b[[i]] <- convert_dg2bindinggradient(
-            b_ddg = b_ddg_var,
-            f_ddg = f_ddg_var,
+            b_ddg = b_ddg,
+            f_ddg = f_ddg,
+            b_ddg_var = b_ddg_var,
+            f_ddg_var = f_ddg_var,
             b_dgwt = global_par[grep(paste0("b", i, "_dgwt"), names(global_par))],
             f_dgwt = global_par[grep(paste0("^bf[AB]?", i, "_dgwt"), names(global_par))],
             b_fitwt = global_par[grep(paste0("b", i, "_fitwt"), names(global_par))],
@@ -67,7 +77,8 @@ dg__model_gr <- function(
             w = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("b", i, "_sigma")],
             mutxvar = varlist[["mutxvar"]],
             fitness_scale = varlist[["fitness_scale"]],
-            no_folded_states = parlist[["no_folded_states"]]
+            no_folded_states = parlist[["no_folded_states"]],
+            lambda = parlist[["lambda"]]
         )
     }
 

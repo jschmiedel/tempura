@@ -9,6 +9,8 @@ dataset_folder = "../doubledeepPCA/dg_models/SH3"
 model_name = "three_state"
 model_name = "four_state"
 
+model_name = "three_state_l0p1"
+
 dg_prepare_datasets(dataset_folder = dataset_folder,
 	abundancepca_files = c(paste0(dataset_folder, "/data/01a-GRB2_epPCR_stabilityPCA_aa012_thresholded.RData"),
 		paste0(dataset_folder, "/data/01c-GRB2_NM2_stabilityPCA_aa012_thresholded.RData")),
@@ -18,16 +20,19 @@ dg_prepare_datasets(dataset_folder = dataset_folder,
 
 dg_prepare_model(
 	dataset_folder = dataset_folder,
-	model_name = model_name
+	model_name = model_name,
+    lambda = 0.1
 )
 
-for (it in seq(1,21)) {
+for (it in seq(1,5)) {
     print (it)
     dg_estimate(
         dataset_folder = dataset_folder,
         model_name = model_name,
         iteration = it,
-        maxit = 20
+        which_test_set = 1,
+        maxit = 100,
+        trace_optim = TRUE
     )
 }
 

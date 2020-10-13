@@ -6,6 +6,7 @@
 #' @param no_folded_states integer, '1': one folded, binding-competent state, '2': binding-incompetent and binding-competent folded states, default = 1
 #' @param dg_extremes float, lower and upper bounds for dG parameters, default = 15
 #' @param fixed_par list of parameters that are being fixed at their starting values for model fitting
+#' @param lambda regularization parameter
 #'
 #' @return writes a .RData file to $dataset_folder/$model_name/parameter_list.RData containing the parlist list with all necessary parameters to compute a specific dG model
 #' @import data.table
@@ -15,7 +16,8 @@ dg_prepare_model <- function(
 	model_name,
 	no_folded_states = 1,
 	dg_extremes = 15,
-	fixed_par = c()
+	fixed_par = c(),
+    lambda
 ) {
 
 	## load varlist
@@ -106,7 +108,8 @@ dg_prepare_model <- function(
     ## collect all parameters
     parlist <- list(dt_par = dt_par,
 				no_folded_states = no_folded_states,
-				fixed_par = fixed_par)
+				fixed_par = fixed_par,
+                lambda = lambda)
 
 	## save varlist to .RData file
 	save(parlist, file = file.path(dataset_folder, model_name, "parameter_list.RData"))
