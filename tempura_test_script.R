@@ -62,6 +62,6 @@ dg_collect_models(
 dg_basic_analyses(
     dataset_folder = dataset_folder,
     model_name = model_name,
-    color_type = "type",
+    color_type = "HAmin_ligand",
     datasets_ab = c(1,1)
 )

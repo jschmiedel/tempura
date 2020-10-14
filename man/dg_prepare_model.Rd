@@ -10,7 +10,7 @@ dg_prepare_model(
   no_folded_states = 1,
   dg_extremes = 15,
   fixed_par = c(),
-  lambda
+  lambda = 0.1
 )
 }
 \arguments{

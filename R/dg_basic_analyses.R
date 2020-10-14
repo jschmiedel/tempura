@@ -2,7 +2,7 @@
 #'
 #' @param dataset_folder absolute path to the dataset folder, is created if non-existent
 #' @param model_name name of the model that should be computed on the dataset
-#' @param color_type variable with which to color variants; can be any column_name from structural_properties file; any other than the default "" will exclude variants with multiple mutations and the wild-type variant
+#' @param color_type variable with which to color variants; can be Nmut or any column_name from structural_properties file; any other than the default "" will exclude variants with multiple mutations and the wild-type variant
 #' @param max_variants maximual number of variants to plot, default = 3e3, will be downsampled if # variants > max_variants
 #' @param datasets_ab index of datasets to use (in case multiple abundance or binding datasets were supplied)
 #'
@@ -20,6 +20,8 @@ dg_basic_analyses <- function(
 ){
 
     ggplot2::theme_set(ggplot2::theme_bw(base_size = 8))
+    col_purple = "#9161A8"
+    col_orange = "#F7941E"
 
     # load varlist
     load(file = file.path(dataset_folder, "data/fitness_dataset.RData"))
@@ -58,6 +60,8 @@ dg_basic_analyses <- function(
     vd <- model_results[["variant_data"]]
     if (color_type == "") {
         vd[, color_type := "all vars"]
+    } else if (color_type == "Nmut") {
+        vd[grepl("[0-9]", aa_subs), color_type := factor(length(grep("_", aa_subs)) + 1), aa_subs]
     } else if (exists("structural_properties") == TRUE) {
         vd[!grepl("_", aa_subs) & grepl("[0-9]", aa_subs), Pos := as.integer(paste0(strsplit(aa_subs,"")[[1]][1:(nchar(aa_subs)-1)], collapse = "")), aa_subs]
         vd <- merge(vd,
@@ -72,12 +76,21 @@ dg_basic_analyses <- function(
     ## plot inter-relationship between estimated ddg values and fitness values
     # plot f_ddg distribution and relationship with f_fitness, b_ddg and b_fitness
     vd_plot <- vd[!is.na(get(paste0("f", datasets_ab[1], "_fitness"))) &
-                  !is.na(get(paste0("b", datasets_ab[2], "_fitness")))]
+                  !is.na(get(paste0("b", datasets_ab[2], "_fitness"))) &
+                  !is.na(color_type)]
     if (parlist[["no_folded_states"]] == 1) {
-        df_dist <- ggplot2::ggplot(data = vd_plot) +
-            ggplot2::geom_density(ggplot2::aes(x = f_ddg + am[grep(paste0("^f", datasets_ab[1], "_dgwt"), parameter), value], color = color_type)) +
+        df_dist <- ggplot2::ggplot(data = vd_plot)
+        if (is.factor(vd_plot$color_type)) {
+            df_dist <- df_dist +
+                ggplot2::geom_density(ggplot2::aes(x = f_ddg + am[grep(paste0("^f", datasets_ab[1], "_dgwt"), parameter), value],
+                                            color = color_type)) +
+                ggplot2::scale_color_brewer(palette = "Set1")
+        } else {
+            df_dist <- df_dist +
+                ggplot2::geom_density(ggplot2::aes(x = f_ddg + am[grep(paste0("^f", datasets_ab[1], "_dgwt"), parameter), value]), color = 'black')
+        }
+       df_dist <- df_dist +
             ggplot2::geom_vline(xintercept = am[grep(paste0("^f", datasets_ab[1], "_dgwt"), parameter), value],linetype = 2) +
-            ggplot2::scale_color_brewer(palette = "Set1") +
             ggplot2::theme(legend.position = c(0.75, 0.75)) +
             ggplot2::labs(x = "dG folding", color = "")
 
@@ -93,8 +106,13 @@ dg_basic_analyses <- function(
             ggplot2::labs(x = "dG folding",
                 y = paste0("folding fitness ", datasets_ab[1]),
                 color = "") +
-            ggplot2::theme(legend.position = "none") +
-            ggplot2::scale_color_brewer(palette = "Set1")
+            ggplot2::theme(legend.position = "none")
+        if (is.factor(vd_plot$color_type)) {
+            df_ffitness <- df_ffitness + ggplot2::scale_color_brewer(palette = "Set1")
+        } else {
+            df_ffitness <- df_ffitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+        }
+
 
         df_bfitness <- ggplot2::ggplot(data = vd_plot,
                 ggplot2::aes(x = f_ddg + am[grep(paste0("^bf", datasets_ab[2], "_dgwt"), parameter), value])) +
@@ -108,8 +126,12 @@ dg_basic_analyses <- function(
             ggplot2::labs(x = "dG folding",
                 y = paste0("binding fitness ", datasets_ab[2]),
                 color = "") +
-            ggplot2::theme(legend.position = "none") +
-            ggplot2::scale_color_brewer(palette = "Set1")
+            ggplot2::theme(legend.position = "none")
+        if (is.factor(vd_plot$color_type)) {
+            df_bfitness <- df_bfitness + ggplot2::scale_color_brewer(palette = "Set1")
+        } else {
+            df_bfitness <- df_bfitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+        }
 
         df_db <- ggplot2::ggplot(vd_plot,
               ggplot2::aes(x = f_ddg + am[grep(paste0("^f", datasets_ab[1], "_dgwt"), parameter), value],
@@ -118,25 +140,39 @@ dg_basic_analyses <- function(
             ggplot2::geom_point(alpha=0.2) +
             # ggplot2::scale_x_continuous(breaks = seq(-6,6,1)) +
             # ggplot2::scale_y_continuous(breaks = seq(-6,6,1)) +
-            ggplot2::scale_color_brewer(palette = "Set1") +
             ggplot2::geom_vline(xintercept = am[grep(paste0("^f", datasets_ab[1], "_dgwt"), parameter), value],linetype = 2) +
             ggplot2::geom_hline(yintercept = am[grep(paste0("^b", datasets_ab[2], "_dgwt"), parameter), value],linetype = 2) +
             ggplot2::labs(x = "dG folding",
                 y = "dG binding",
                 color = "") +
             ggplot2::theme(legend.position = "none")
+        if (is.factor(vd_plot$color_type)) {
+            df_db <- df_db + ggplot2::scale_color_brewer(palette = "Set1")
+        } else {
+            df_db <- df_db + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+        }
     }
 
     # plot b_ddg distribution and relationship with b1_fitness
-    db_dist <- ggplot2::ggplot() +
-        ggplot2::geom_density(data = vd_plot,
-          ggplot2::aes(x = b_ddg + am[grep(paste0("^b", datasets_ab[2], "_dgwt"), parameter), value], color = color_type)) +
+    db_dist <- ggplot2::ggplot()
+    if (is.factor(vd_plot$color_type)) {
+        db_dist <- db_dist +
+            ggplot2::geom_density(data = vd_plot,
+                ggplot2::aes(x = b_ddg + am[grep(paste0("^b", datasets_ab[2], "_dgwt"), parameter), value],
+                    color = color_type)) +
+            ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        db_dist <- db_dist +
+            ggplot2::geom_density(data = vd_plot,
+                ggplot2::aes(x = b_ddg + am[grep(paste0("^b", datasets_ab[2], "_dgwt"), parameter), value]), color = 'black')
+    }
+    db_dist <- db_dist +
         ggplot2::geom_vline(xintercept = am[grep(paste0("^b", datasets_ab[2], "_dgwt"), parameter), value],linetype = 2) +
         # ggplot2::scale_x_continuous(breaks = seq(-6,6,1)) +
-        ggplot2::scale_color_brewer(palette = "Set1") +
         ggplot2::coord_flip() +
         ggplot2::labs(x = "dG binding") +
         ggplot2::theme(legend.position = "none")
+
 
     db_bfitness <- ggplot2::ggplot(data = vd_plot,
             ggplot2::aes(x = b_ddg + am[grep(paste0("^b", datasets_ab[2], "_dgwt"), parameter), value])) +
@@ -144,14 +180,18 @@ dg_basic_analyses <- function(
         ggplot2::geom_point(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_fitness"), color = "color_type")) +
         ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_pred_fddg0")), color = "black") +
         # ggplot2::scale_y_continuous(breaks = seq(-6, 1, 1)) +
-        # ggplot2::scale_x_continuous(breaks = seq(-6,6,1)) +
-        ggplot2::scale_color_brewer(palette = "Set1") +
+        # ggplot2::scale_x_continuous(breaks = seq(-6,6,1))
         ggplot2::geom_hline(yintercept = am[grep(paste0("^b", datasets_ab[2], "_fit"), parameter), c(value)],linetype = 2) +
         ggplot2::geom_vline(xintercept = am[grep(paste0("^b", datasets_ab[2], "_dgwt"), parameter), value],linetype = 2) +
         ggplot2::labs(x = "dG binding",
             y = paste0("binding fitness ", datasets_ab[2]),
             color = "") +
         ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        db_bfitness <- db_bfitness + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        db_bfitness <- db_bfitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
 
     if (parlist[["no_folded_states"]] == 1) {
         p <- gridExtra::grid.arrange(df_dist, df_ffitness, df_bfitness, df_db, db_dist, db_bfitness,
@@ -176,15 +216,20 @@ dg_basic_analyses <- function(
     for (i in 1:ncol(idx)) {
         plot_list[[pidx]] <- ggplot2::ggplot(data = vd[
                     !is.na(get(paste0("f", idx[1, i], "_fitness"))) &
-                    !is.na(get(paste0("f", idx[2, i], "_fitness")))]) +
+                    !is.na(get(paste0("f", idx[2, i], "_fitness"))) &
+                    !is.na(color_type)]) +
             ggplot2::geom_point(ggplot2::aes_string(
                 x = paste0("f", idx[1, i], "_fitness"),
                 y = paste0("f", idx[2, i], "_fitness"),
                 color = "color_type")) +
             ggplot2::geom_line(ggplot2::aes_string(
                 x = paste0("f", idx[1, i], "_pred"),
-                y = paste0("f", idx[2, i], "_pred")), color = "black") +
-            ggplot2::scale_color_brewer(palette = "Set1")
+                y = paste0("f", idx[2, i], "_pred")), color = "black")
+        if (is.factor(vd_plot$color_type)) {
+            plot_list[[pidx]] <- plot_list[[pidx]] + ggplot2::scale_color_brewer(palette = "Set1")
+        } else {
+            plot_list[[pidx]] <- plot_list[[pidx]] + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+        }
         pidx <- pidx + 1
     }
 
@@ -193,15 +238,20 @@ dg_basic_analyses <- function(
         for (bi in 1:varlist[["no_bind_datasets"]]) {
             plot_list[[pidx]] <- ggplot2::ggplot(vd[
                     !is.na(get(paste0("b", bi, "_fitness"))) &
-                    !is.na(get(paste0("f", fi, "_fitness")))]) +
+                    !is.na(get(paste0("f", fi, "_fitness"))) &
+                    !is.na(color_type)]) +
                 ggplot2::geom_point(ggplot2::aes_string(
                     x = paste0("b", bi, "_fitness"),
                     y = paste0("f", fi, "_fitness"),
                     color = "color_type")) +
                 ggplot2::geom_line(ggplot2::aes_string(
                     x = paste0("b", bi, "_pred_bddg0"),
-                    y = paste0("f", fi, "_pred")), color = "black") +
-                ggplot2::scale_color_brewer(palette = "Set1")
+                    y = paste0("f", fi, "_pred")), color = "black")
+            if (is.factor(vd_plot$color_type)) {
+                plot_list[[pidx]] <- plot_list[[pidx]] + ggplot2::scale_color_brewer(palette = "Set1")
+            } else {
+                plot_list[[pidx]] <- plot_list[[pidx]] + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+            }
             pidx <- pidx + 1
         }
     }
@@ -213,15 +263,20 @@ dg_basic_analyses <- function(
         for (i in seq_along(ncol(idx))) {
             plot_list[[pidx]] <- ggplot2::ggplot(vd[
                     !is.na(get(paste0("b", idx[1, i], "_fitness"))) &
-                    !is.na(get(paste0("b", idx[2, i], "_fitness")))]) +
+                    !is.na(get(paste0("b", idx[2, i], "_fitness"))) &
+                    !is.na(color_type)]) +
                 ggplot2::geom_point(ggplot2::aes_string(
                     x = paste0("b", idx[1, i], "_fitness"),
                     y = paste0("b", idx[2, i], "_fitness"),
                     color = "color_type")) +
                 ggplot2::geom_line(ggplot2::aes_string(
                     x = paste0("b", idx[1, i], "_pred"),
-                    y = paste0("b", idx[2, i], "_pred")), color = "red") +
-                ggplot2::scale_color_brewer(palette = "Set1")
+                    y = paste0("b", idx[2, i], "_pred")), color = "red")
+            if (is.factor(vd_plot$color_type)) {
+                plot_list[[pidx]] <- plot_list[[pidx]] + ggplot2::scale_color_brewer(palette = "Set1")
+            } else {
+                plot_list[[pidx]] <- plot_list[[pidx]] + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+            }
             pidx <- pidx + 1
         }
     }

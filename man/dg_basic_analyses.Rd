@@ -17,7 +17,7 @@ dg_basic_analyses(
 
 \item{model_name}{name of the model that should be computed on the dataset}
 
-\item{color_type}{variable with which to color variants; can be any column_name from structural_properties file; any other than the default "" will exclude variants with multiple mutations and the wild-type variant}
+\item{color_type}{variable with which to color variants; can be Nmut or any column_name from structural_properties file; any other than the default "" will exclude variants with multiple mutations and the wild-type variant}
 
 \item{max_variants}{maximual number of variants to plot, default = 3e3, will be downsampled if # variants > max_variants}
 
