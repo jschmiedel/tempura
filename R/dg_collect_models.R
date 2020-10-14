@@ -20,6 +20,8 @@ dg_collect_models <- function(
     stage = "model"
 ){
 
+    objective <- test_set <- varlist <- parlist <- x <- y <- value <- variable <- parameter <- convergence <- type <- dataset <- NULL
+
     ggplot2::theme_set(ggplot2::theme_bw(base_size = 8))
 
     if (stage == "model") {
@@ -112,7 +114,7 @@ dg_collect_models <- function(
         plot_list = list()
         for (ds in 1:varlist[["no_abd_datasets"]]) {
             plot_list[[ds]] <- ggplot2::ggplot(
-                    variant_data[, .(
+                    variant_data[, list(
                             x = unlist(.SD[, 1]),
                             y = unlist(.SD[, 2]),
                             .SD[,3]),
@@ -134,7 +136,7 @@ dg_collect_models <- function(
         for (ds in 1:varlist[["no_bind_datasets"]]) {
             plot_list[[varlist[["no_abd_datasets"]] + ds]] <-
                 ggplot2::ggplot(
-                    variant_data[, .(
+                    variant_data[, list(
                                 x = unlist(.SD[, 1]),
                                 y = unlist(.SD[, 2]),
                                 .SD[,3]),
@@ -170,7 +172,7 @@ dg_collect_models <- function(
             ggplot2::scale_x_continuous(breaks = sort(unique(best_models[, test_set]))) +
             ggplot2::labs(x = "train/test set",
                     y = "Pearson's R",
-                    title = paste0("average R: ", pp_melt[, .(value = mean(value)), variable][, paste0(variable, " = ", round(value, 3), collapse = ", ")]))
+                    title = paste0("average R: ", pp_melt[, list(value = mean(value)), variable][, paste0(variable, " = ", round(value, 3), collapse = ", ")]))
         ggplot2::ggsave(p,
                 file = file.path(dataset_folder, model_name, "results/prediction_performance_fitness_R.pdf"),
                 width = 5,

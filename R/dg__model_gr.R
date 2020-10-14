@@ -14,6 +14,8 @@ dg__model_gr <- function(
 	varlist
 ) {
 
+    mutation <- NULL
+
     ## ensure fixed parameters are fixed
   	for (i in seq_along(parlist[["fixed_par"]])) {
     	par[names(par) == names(parlist[["fixed_par"]])[i]] <- parlist[["fixed_par"]][i]

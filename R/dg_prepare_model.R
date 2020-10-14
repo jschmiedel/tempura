@@ -20,6 +20,8 @@ dg_prepare_model <- function(
     lambda = 0.1
 ) {
 
+    varlist <- mutation <- lower_bound <- upper_bound <- parameter <- start_par_mean <- start_par_sd <- NULL
+
 	## load varlist
     load(file = file.path(dataset_folder, "data/fitness_dataset.RData"))
 

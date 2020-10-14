@@ -19,6 +19,8 @@ dg_basic_analyses <- function(
     datasets_ab = c(1, 1)
 ){
 
+    varlist <- parlist <- f_ddg <- parameter <- value <- fA_ddg <- fB_ddg <- b_ddg <- aa_subs <- Pos <- NULL
+
     ggplot2::theme_set(ggplot2::theme_bw(base_size = 8))
     col_purple = "#9161A8"
     col_orange = "#F7941E"
@@ -65,7 +67,7 @@ dg_basic_analyses <- function(
     } else if (exists("structural_properties") == TRUE) {
         vd[!grepl("_", aa_subs) & grepl("[0-9]", aa_subs), Pos := as.integer(paste0(strsplit(aa_subs,"")[[1]][1:(nchar(aa_subs)-1)], collapse = "")), aa_subs]
         vd <- merge(vd,
-            structural_properties[, .(Pos, color_type = unlist(.SD[,1])), .SDcols = color_type],
+            structural_properties[, list(Pos, color_type = unlist(.SD[,1])), .SDcols = color_type],
             by = "Pos")
     } else {
         print("error: no structural properties file provided to color variants")

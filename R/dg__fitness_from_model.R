@@ -26,6 +26,8 @@ dg__fitness_from_model <- function(
     bfit_ddg0 = FALSE
 ) {
 
+  test_set <- parameter <- value <- aa_subs <- NULL
+
   if (per_testset == TRUE) {
     idx = sort(dg_model0[, test_set])
   } else {idx = 0}
@@ -67,7 +69,7 @@ dg__fitness_from_model <- function(
       if (overwrite == TRUE | length(grep(paste0("^f", ds, "_pred$"), names(variant_data))) == 0) {
         variant_data[, paste0("f", ds, "_pred") := as.numeric(
                 convert_dg2foldingfitness(
-                  f_ddg = f_ddg_var,
+                  f_ddg_var = f_ddg_var,
                   f_dgwt = dg_model[grep(paste0("^f[AB]?", ds, "_dgwt"), parameter), value],
                   f_fitwt = dg_model[grep(paste0("f", ds, "_fitwt"), parameter), value],
                   f_fit0 = dg_model[grep(paste0("f", ds, "_fit0"), parameter), value],
@@ -95,8 +97,8 @@ dg__fitness_from_model <- function(
       if (overwrite == TRUE | length(grep(paste0("^b", ds, "_pred$"), names(variant_data))) == 0) {
         variant_data[, paste0("b", ds, "_pred") := as.numeric(
                 convert_dg2bindingfitness(
-                  b_ddg = b_ddg_var,
-                  f_ddg = f_ddg_var,
+                  b_ddg_var = b_ddg_var,
+                  f_ddg_var = f_ddg_var,
                   b_dgwt = dg_model[grep(paste0("b", ds, "_dgwt"), parameter), value],
                   f_dgwt = dg_model[grep(paste0("^bf[AB]?", ds, "_dgwt"), parameter), value],
                   b_fitwt = dg_model[grep(paste0("b", ds, "_fitwt"), parameter), value],
@@ -112,8 +114,8 @@ dg__fitness_from_model <- function(
         if (overwrite == TRUE | length(grep(paste0("^b", ds, "_pred_bddg0$"), names(variant_data))) == 0) {
           variant_data[, paste0("b", ds, "_pred_bddg0") := as.numeric(
               convert_dg2bindingfitness(
-                b_ddg = b_ddg_var0,
-                f_ddg = f_ddg_var,
+                b_ddg_var = b_ddg_var0,
+                f_ddg_var = f_ddg_var,
                 b_dgwt = dg_model[grep(paste0("b", ds, "_dgwt"), parameter), value],
                 f_dgwt = dg_model[grep(paste0("^bf[AB]?", ds, "_dgwt"), parameter), value],
                 b_fitwt = dg_model[grep(paste0("b", ds, "_fitwt"), parameter), value],
@@ -126,17 +128,10 @@ dg__fitness_from_model <- function(
         }
 
         if (overwrite == TRUE | length(grep(paste0("^b", ds, "_pred_fddg0$"), names(variant_data))) == 0) {
-
-          # if (parlist[["no_folded_states"]] == 1) {
-          #   x <- list(0)
-          # } else {
-          #   x <- list(0, 0)
-          # }
-
           variant_data[, paste0("b", ds, "_pred_fddg0") := as.numeric(
               convert_dg2bindingfitness(
-                b_ddg = b_ddg_var,
-                f_ddg = f_ddg_var0,
+                b_ddg_var = b_ddg_var,
+                f_ddg_var = f_ddg_var0,
                 b_dgwt = dg_model[grep(paste0("b", ds, "_dgwt"), parameter), value],
                 f_dgwt = dg_model[grep(paste0("^bf[AB]?", ds, "_dgwt"), parameter), value],
                 b_fitwt = dg_model[grep(paste0("b", ds, "_fitwt"), parameter), value],
