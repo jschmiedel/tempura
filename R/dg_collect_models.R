@@ -202,6 +202,8 @@ dg_collect_models <- function(
         pp <- melt(X[["prediction_performance"]][, .SD, .SDcols = grep("^[fb]", names(X[["prediction_performance"]]))])
         cat("prediction performance of average model: \n", pp[, paste0(variable, " = ", round(value,3), "\n")])
 
+        # predict all fitness values given average parameters
+        variant_data <- X[["variant_data"]]
 
         ## write models/parameter to RData file
         model_results = list(best_models = best_models,
