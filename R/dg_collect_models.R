@@ -79,17 +79,20 @@ dg_collect_models <- function(
 
 
         ## compare global parameters across best models
-        global_pars <- best_models[,
-            .SD,
-            .SDcols = names(best_models)[!grepl("ddg", names(best_models))]]
-        global_pars[, objective := log10(objective)]
+        if (nrow(best_models) > 1) {
+          global_pars <- best_models[,
+                .SD,
+                .SDcols = names(best_models)[!grepl("ddg", names(best_models))]]
+            global_pars[, objective := log10(objective)]
 
-        p <- GGally::ggpairs(global_pars,
-            columns = grep("^[obf]",names(global_pars)))
-        ggplot2::ggsave(p,
-            file = file.path(dataset_folder, model_name, "results", "global_par_distribution_bestmodels.pdf"),
-            width = 15,
-            height = 15)
+            p <- GGally::ggpairs(global_pars,
+                columns = grep("^[obf]",names(global_pars)))
+            ggplot2::ggsave(p,
+                file = file.path(dataset_folder, model_name, "results", "global_par_distribution_bestmodels.pdf"),
+                width = 15,
+                height = 15)
+        }
+
 
 
         ## predictive performance per train/test set

@@ -9,7 +9,8 @@ dataset_folder = "../doubledeepPCA/dg_models/SH3"
 model_name = "three_state"
 model_name = "four_state"
 
-model_name = "three_state_l0p1"
+dataset_folder = "/nfs/users/blehner/jschmiedel/doubledeepPCA/dg_models/SH3_regtest"
+model_name = "three_lm1"
 
 dg_prepare_datasets(dataset_folder = dataset_folder,
 	abundancepca_files = c(paste0(dataset_folder, "/data/01a-GRB2_epPCR_stabilityPCA_aa012_thresholded.RData"),
