@@ -12,7 +12,7 @@ dg__fitness_from_model(
   calc_performance = FALSE,
   per_testset = FALSE,
   overwrite = TRUE,
-  bfit_ddg0 = FALSE
+  predfit_ddgvar = FALSE
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ dg__fitness_from_model(
 
 \item{overwrite}{logical, overwrite predicted fitness values if already present in variant_data0?, default = TRUE}
 
-\item{bfit_ddg0}{logical, also calculate binding fitness values assuming folding or binding ddGs are all 0, default = FALSE}
+\item{predfit_ddgvar}{logical, predict fitness values for a set of variations of ddg values (setting one to zero, holding parameters equal etc, used for plotting analysis), default = FALSE}
 }
 \value{
 returns a list with a variant_data data.table with predited fitness values, and a prediction_performance data.table if calc_performance == TRUE

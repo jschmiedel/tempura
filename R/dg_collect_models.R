@@ -59,6 +59,7 @@ dg_collect_models <- function(
         }
 
         print(paste0("collected ", nrow(dt_models), " models"))
+        print(paste0(dt_models[convergence == 0,.N], "/", nrow(dt_models), " models converged"))
 
         ## compare global parameters across all models
         global_pars <- dt_models[,
