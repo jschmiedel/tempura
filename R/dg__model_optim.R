@@ -19,6 +19,8 @@ dg__model_optim <- function(
   trace_optim = FALSE
 ){
 
+  lower_bound <- upper_bound <- NULL
+
   if (trace_optim == TRUE) {
     trace = 3
   } else {

@@ -7,6 +7,7 @@
 #' @param iteration integer, to calucate a set of models and get reproducible results
 #' @param return_model logical, if TRUE, returns a data.table with fitted values for all model parameters, default = FALSE
 #' @param maxit integer, maximum number of iterations by optim algorithm, default = 1e4
+#' @param trace_optim logical, if TRUE, shows trace = 3, default: FALSE
 #'
 #' @return writes the model parameters as .txt file to $dataset_folder/$model_name/tmp/dg_model_$testset_$iteration
 #' @import data.table
@@ -20,8 +21,11 @@ dg_estimate <- function(
 	which_test_set = 0,
 	iteration = 1,
     return_model = FALSE,
-    maxit = 1e4
+    maxit = 1e4,
+    trace_optim = FALSE
 ) {
+
+    test_set <- parlist <- start_par_mean <- start_par_sd <- parameter <- lower_bound <- upper_bound <- NULL
 
     ## load preprocessed files
     # load varlist
@@ -84,7 +88,8 @@ dg_estimate <- function(
         start_par = start_par,
         parlist = parlist,
         varlist = varlist,
-        maxit = maxit
+        maxit = maxit,
+        trace_optim = trace_optim
     )
 
 
