@@ -20,6 +20,8 @@ dg_collect_models <- function(
     stage = "model"
 ){
 
+    objective <- test_set <- varlist <- parlist <- x <- y <- value <- variable <- parameter <- convergence <- type <- dataset <- NULL
+
     ggplot2::theme_set(ggplot2::theme_bw(base_size = 8))
 
     if (stage == "model") {
@@ -57,6 +59,7 @@ dg_collect_models <- function(
         }
 
         print(paste0("collected ", nrow(dt_models), " models"))
+        print(paste0(dt_models[convergence == 0,.N], "/", nrow(dt_models), " models converged"))
 
         ## compare global parameters across all models
         global_pars <- dt_models[,
@@ -79,17 +82,20 @@ dg_collect_models <- function(
 
 
         ## compare global parameters across best models
-        global_pars <- best_models[,
-            .SD,
-            .SDcols = names(best_models)[!grepl("ddg", names(best_models))]]
-        global_pars[, objective := log10(objective)]
+        if (nrow(best_models) > 1) {
+          global_pars <- best_models[,
+                .SD,
+                .SDcols = names(best_models)[!grepl("ddg", names(best_models))]]
+            global_pars[, objective := log10(objective)]
 
-        p <- GGally::ggpairs(global_pars,
-            columns = grep("^[obf]",names(global_pars)))
-        ggplot2::ggsave(p,
-            file = file.path(dataset_folder, model_name, "results", "global_par_distribution_bestmodels.pdf"),
-            width = 15,
-            height = 15)
+            p <- GGally::ggpairs(global_pars,
+                columns = grep("^[obf]",names(global_pars)))
+            ggplot2::ggsave(p,
+                file = file.path(dataset_folder, model_name, "results", "global_par_distribution_bestmodels.pdf"),
+                width = 15,
+                height = 15)
+        }
+
 
 
         ## predictive performance per train/test set
@@ -109,7 +115,7 @@ dg_collect_models <- function(
         plot_list = list()
         for (ds in 1:varlist[["no_abd_datasets"]]) {
             plot_list[[ds]] <- ggplot2::ggplot(
-                    variant_data[, .(
+                    variant_data[, list(
                             x = unlist(.SD[, 1]),
                             y = unlist(.SD[, 2]),
                             .SD[,3]),
@@ -131,7 +137,7 @@ dg_collect_models <- function(
         for (ds in 1:varlist[["no_bind_datasets"]]) {
             plot_list[[varlist[["no_abd_datasets"]] + ds]] <-
                 ggplot2::ggplot(
-                    variant_data[, .(
+                    variant_data[, list(
                                 x = unlist(.SD[, 1]),
                                 y = unlist(.SD[, 2]),
                                 .SD[,3]),
@@ -167,7 +173,7 @@ dg_collect_models <- function(
             ggplot2::scale_x_continuous(breaks = sort(unique(best_models[, test_set]))) +
             ggplot2::labs(x = "train/test set",
                     y = "Pearson's R",
-                    title = paste0("average R: ", pp_melt[, .(value = mean(value)), variable][, paste0(variable, " = ", round(value, 3), collapse = ", ")]))
+                    title = paste0("average R: ", pp_melt[, list(value = mean(value)), variable][, paste0(variable, " = ", round(value, 3), collapse = ", ")]))
         ggplot2::ggsave(p,
                 file = file.path(dataset_folder, model_name, "results/prediction_performance_fitness_R.pdf"),
                 width = 5,
@@ -199,6 +205,8 @@ dg_collect_models <- function(
         pp <- melt(X[["prediction_performance"]][, .SD, .SDcols = grep("^[fb]", names(X[["prediction_performance"]]))])
         cat("prediction performance of average model: \n", pp[, paste0(variable, " = ", round(value,3), "\n")])
 
+        # predict all fitness values given average parameters
+        variant_data <- X[["variant_data"]]
 
         ## write models/parameter to RData file
         model_results = list(best_models = best_models,

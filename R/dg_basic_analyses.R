@@ -427,7 +427,7 @@ dg_basic_analyses <- function(
             plot_list[[pidx]] <- plot_list[[pidx]] +
                 ggplot2::geom_line(ggplot2::aes_string(
                     x = paste0("f", idx[1, i], "_pred"),
-                    y = paste0("f", idx[2, i], "_pred")), color = "black") +
+                    y = paste0("f", idx[2, i], "_pred")), color = "black")
         } else {
             plot_list[[pidx]] <- plot_list[[pidx]] +
                 ggplot2::geom_point(ggplot2::aes_string(
@@ -511,7 +511,7 @@ dg_basic_analyses <- function(
                 plot_list[[pidx]] <- plot_list[[pidx]] +
                     ggplot2::geom_line(ggplot2::aes_string(
                         x = paste0("b", idx[1, i], "_pred"),
-                        y = paste0("b", idx[2, i], "_pred")), color = "black") +
+                        y = paste0("b", idx[2, i], "_pred")), color = "black")
             } else {
                 plot_list[[pidx]] <- plot_list[[pidx]] +
                     ggplot2::geom_point(ggplot2::aes_string(

@@ -21,6 +21,8 @@ dg_prepare_datasets = function(
 	fitness_scale = "lin"
 ) {
 
+	tts <- test_set <- aa_seq <- aa_subs <- mutation <- NULL
+
 	## create dataset folders, if not already present
 	dir.create(file.path(dataset_folder))
 	dir.create(file.path(dataset_folder, "data"))

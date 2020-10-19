@@ -21,6 +21,8 @@ dg_bootstrap <- function(
     maxit = 1e4
 ) {
 
+    model_results <- value <- parameter <- parlist <- lower_bound <- upper_bound <- NULL
+
     ## load preprocessed files
     # load varlist
     load(file = file.path(dataset_folder, "data/fitness_dataset.RData"))
