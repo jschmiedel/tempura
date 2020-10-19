@@ -407,7 +407,6 @@ dg_basic_analyses <- function(
 
 
 
-
     ## plot relationship between different fitness measurements if effects where only driven by folding
     plot_list = list()
     pidx <- 1
