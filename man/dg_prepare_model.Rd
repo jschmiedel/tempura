@@ -9,7 +9,8 @@ dg_prepare_model(
   model_name,
   no_folded_states = 1,
   dg_extremes = 15,
-  fixed_par = c()
+  fixed_par = c(),
+  lambda = 0.1
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ dg_prepare_model(
 \item{dg_extremes}{float, lower and upper bounds for dG parameters, default = 15}
 
 \item{fixed_par}{list of parameters that are being fixed at their starting values for model fitting}
+
+\item{lambda}{regularization parameter}
 }
 \value{
 writes a .RData file to $dataset_folder/$model_name/parameter_list.RData containing the parlist list with all necessary parameters to compute a specific dG model

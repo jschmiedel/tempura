@@ -347,7 +347,11 @@ dg_basic_analyses <- function(
         ggplot2::geom_vline(xintercept = am[grep(paste0("^b", datasets_ab[2], "_dgwt"), parameter), value],linetype = 2) +
         # ggplot2::scale_x_continuous(breaks = seq(-6,6,1)) +
         ggplot2::coord_flip() +
+<<<<<<< HEAD
         ggplot2::labs(x = "dG binding", color = "") +
+=======
+        ggplot2::labs(x = "dG binding") +
+>>>>>>> 91dec30c9f22671d16df8837d4e554c8b8ef7966
         ggplot2::theme(legend.position = c(0.75, 0.25))
 
 
@@ -369,8 +373,13 @@ dg_basic_analyses <- function(
     } else {
         db_bfitness <- db_bfitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
     }
+<<<<<<< HEAD
 
 
+=======
+
+
+>>>>>>> 91dec30c9f22671d16df8837d4e554c8b8ef7966
     # plot
     if (parlist[["no_folded_states"]] == 1) {
         # plot folding and binding
@@ -423,6 +432,7 @@ dg_basic_analyses <- function(
                 x = paste0("f", idx[1, i], "_fitness"),
                 y = paste0("f", idx[2, i], "_fitness"),
                 color = "color_type")) +
+<<<<<<< HEAD
             ggplot2::labs(color = "")
         if (parlist[["no_folded_states"]] == 1) {
             plot_list[[pidx]] <- plot_list[[pidx]] +
@@ -438,6 +448,15 @@ dg_basic_analyses <- function(
                     x = paste0("f", idx[1, i], "_pred"),
                     y = paste0("f", idx[2, i], "_pred")), color = "black")
         }
+=======
+            ggplot2::geom_point(ggplot2::aes_string(
+                x = paste0("f", idx[1, i], "_pred"),
+                y = paste0("f", idx[2, i], "_pred")), color = "black", alpha = 0.3) +
+            ggplot2::geom_smooth(ggplot2::aes_string(
+                x = paste0("f", idx[1, i], "_pred"),
+                y = paste0("f", idx[2, i], "_pred")), color = "black") +
+            ggplot2::labs(color = "")
+>>>>>>> 91dec30c9f22671d16df8837d4e554c8b8ef7966
         if (is.factor(vd_plot$color_type)) {
             plot_list[[pidx]] <- plot_list[[pidx]] +
                 ggplot2::scale_color_brewer(palette = "Set1")
@@ -507,6 +526,7 @@ dg_basic_analyses <- function(
                     x = paste0("b", idx[1, i], "_fitness"),
                     y = paste0("b", idx[2, i], "_fitness"),
                     color = "color_type")) +
+<<<<<<< HEAD
                 ggplot2::theme(legend.position = "none")
             if (parlist[["no_folded_states"]] == 1) {
                 plot_list[[pidx]] <- plot_list[[pidx]] +
@@ -522,6 +542,12 @@ dg_basic_analyses <- function(
                         x = paste0("b", idx[1, i], "_pred"),
                         y = paste0("b", idx[2, i], "_pred")), color = "black")
             }
+=======
+                ggplot2::geom_line(ggplot2::aes_string(
+                    x = paste0("b", idx[1, i], "_pred"),
+                    y = paste0("b", idx[2, i], "_pred")), color = "red") +
+                ggplot2::theme(legend.position = "none")
+>>>>>>> 91dec30c9f22671d16df8837d4e554c8b8ef7966
             if (is.factor(vd_plot$color_type)) {
                 plot_list[[pidx]] <- plot_list[[pidx]] + ggplot2::scale_color_brewer(palette = "Set1")
             } else {
