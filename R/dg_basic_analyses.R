@@ -412,46 +412,48 @@ dg_basic_analyses <- function(
     pidx <- 1
 
     # abundance fitness datasets against one another
-    idx <- utils::combn(varlist[["no_abd_datasets"]],2)
-    for (i in 1:ncol(idx)) {
-        plot_list[[pidx]] <- ggplot2::ggplot(data = vd[
-                    !is.na(get(paste0("f", idx[1, i], "_fitness"))) &
-                    !is.na(get(paste0("f", idx[2, i], "_fitness"))) &
-                    !is.na(color_type)]) +
-            ggplot2::geom_point(ggplot2::aes_string(
-                x = paste0("f", idx[1, i], "_fitness"),
-                y = paste0("f", idx[2, i], "_fitness"),
-                color = "color_type")) +
-            ggplot2::labs(color = "")
-        if (parlist[["no_folded_states"]] == 1) {
-            plot_list[[pidx]] <- plot_list[[pidx]] +
-                ggplot2::geom_line(ggplot2::aes_string(
-                    x = paste0("f", idx[1, i], "_pred"),
-                    y = paste0("f", idx[2, i], "_pred")), color = "black")
-        } else {
-            plot_list[[pidx]] <- plot_list[[pidx]] +
+    if (varlist[["no_abd_datasets"]] > 1) {
+        idx <- utils::combn(varlist[["no_abd_datasets"]],2)
+        for (i in 1:ncol(idx)) {
+            plot_list[[pidx]] <- ggplot2::ggplot(data = vd[
+                        !is.na(get(paste0("f", idx[1, i], "_fitness"))) &
+                        !is.na(get(paste0("f", idx[2, i], "_fitness"))) &
+                        !is.na(color_type)]) +
                 ggplot2::geom_point(ggplot2::aes_string(
-                    x = paste0("f", idx[1, i], "_pred"),
-                    y = paste0("f", idx[2, i], "_pred")), color = "black", alpha = 0.3) +
-                ggplot2::geom_smooth(ggplot2::aes_string(
-                    x = paste0("f", idx[1, i], "_pred"),
-                    y = paste0("f", idx[2, i], "_pred")), color = "black")
+                    x = paste0("f", idx[1, i], "_fitness"),
+                    y = paste0("f", idx[2, i], "_fitness"),
+                    color = "color_type")) +
+                ggplot2::labs(color = "")
+            if (parlist[["no_folded_states"]] == 1) {
+                plot_list[[pidx]] <- plot_list[[pidx]] +
+                    ggplot2::geom_line(ggplot2::aes_string(
+                        x = paste0("f", idx[1, i], "_pred"),
+                        y = paste0("f", idx[2, i], "_pred")), color = "black")
+            } else {
+                plot_list[[pidx]] <- plot_list[[pidx]] +
+                    ggplot2::geom_point(ggplot2::aes_string(
+                        x = paste0("f", idx[1, i], "_pred"),
+                        y = paste0("f", idx[2, i], "_pred")), color = "black", alpha = 0.3) +
+                    ggplot2::geom_smooth(ggplot2::aes_string(
+                        x = paste0("f", idx[1, i], "_pred"),
+                        y = paste0("f", idx[2, i], "_pred")), color = "black")
+            }
+            if (is.factor(vd_plot$color_type)) {
+                plot_list[[pidx]] <- plot_list[[pidx]] +
+                    ggplot2::scale_color_brewer(palette = "Set1")
+            } else {
+                plot_list[[pidx]] <- plot_list[[pidx]] +
+                ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+            }
+            if (pidx == 1) {
+                plot_list[[pidx]] <- plot_list[[pidx]] +
+                    ggplot2::theme(legend.position = c(0.75, 0.25))
+            } else {
+                plot_list[[pidx]] <- plot_list[[pidx]] +
+                    ggplot2::theme(legend.position = "none")
+            }
+            pidx <- pidx + 1
         }
-        if (is.factor(vd_plot$color_type)) {
-            plot_list[[pidx]] <- plot_list[[pidx]] +
-                ggplot2::scale_color_brewer(palette = "Set1")
-        } else {
-            plot_list[[pidx]] <- plot_list[[pidx]] +
-            ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-        }
-        if (pidx == 1) {
-            plot_list[[pidx]] <- plot_list[[pidx]] +
-                ggplot2::theme(legend.position = c(0.75, 0.25))
-        } else {
-            plot_list[[pidx]] <- plot_list[[pidx]] +
-                ggplot2::theme(legend.position = "none")
-        }
-        pidx <- pidx + 1
     }
 
     # abundance versus binding fitness datasets
