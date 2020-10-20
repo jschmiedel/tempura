@@ -389,7 +389,7 @@ dg_basic_analyses <- function(
             nrow = 2)
         ggplot2::ggsave(p,
             file = file.path(dataset_folder, model_name,
-                paste0("results/dG_relationship_fitness_fA", datasets_ab[1], "_fB", datasets_ab[1], "_", color_type, ".pdf")),
+                paste0("results/dG_relationship_fitness_fA", datasets_ab[1], "_fB", datasets_ab[2], "_", color_type, ".pdf")),
             width = 10,
             height = 7)
 
@@ -399,7 +399,7 @@ dg_basic_analyses <- function(
             nrow = 2)
         ggplot2::ggsave(p,
             file = file.path(dataset_folder, model_name,
-                paste0("results/dG_relationship_b", datasets_ab[1], "_fA", datasets_ab[1], "_fB", datasets_ab[1], "_", color_type, ".pdf")),
+                paste0("results/dG_relationship_b", datasets_ab[1], "_fA", datasets_ab[1], "_fB", datasets_ab[2], "_", color_type, ".pdf")),
             width = 10,
             height = 7)
     }
@@ -489,6 +489,10 @@ dg_basic_analyses <- function(
             } else {
                 plot_list[[pidx]] <- plot_list[[pidx]] + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
             }
+
+            if (fi == datasets_ab[1] & bi == datasets_ab[2]) {
+                plot_ind <- pidx
+            }
             pidx <- pidx + 1
         }
     }
@@ -506,21 +510,13 @@ dg_basic_analyses <- function(
                     x = paste0("b", idx[1, i], "_fitness"),
                     y = paste0("b", idx[2, i], "_fitness"),
                     color = "color_type")) +
-                ggplot2::theme(legend.position = "none")
-            if (parlist[["no_folded_states"]] == 1) {
-                plot_list[[pidx]] <- plot_list[[pidx]] +
-                    ggplot2::geom_line(ggplot2::aes_string(
-                        x = paste0("b", idx[1, i], "_pred"),
-                        y = paste0("b", idx[2, i], "_pred")), color = "black")
-            } else {
-                plot_list[[pidx]] <- plot_list[[pidx]] +
-                    ggplot2::geom_point(ggplot2::aes_string(
-                        x = paste0("b", idx[1, i], "_pred"),
-                        y = paste0("b", idx[2, i], "_pred")), color = "black", alpha = 0.3) +
-                    ggplot2::geom_smooth(ggplot2::aes_string(
-                        x = paste0("b", idx[1, i], "_pred"),
-                        y = paste0("b", idx[2, i], "_pred")), color = "black")
-            }
+                ggplot2::theme(legend.position = "none") +
+                ggplot2::geom_point(ggplot2::aes_string(
+                    x = paste0("b", idx[1, i], "_pred"),
+                    y = paste0("b", idx[2, i], "_pred")), color = "black", alpha = 0.3) +
+                ggplot2::geom_smooth(ggplot2::aes_string(
+                    x = paste0("b", idx[1, i], "_pred"),
+                    y = paste0("b", idx[2, i], "_pred")), color = "black")
             if (is.factor(vd_plot$color_type)) {
                 plot_list[[pidx]] <- plot_list[[pidx]] + ggplot2::scale_color_brewer(palette = "Set1")
             } else {
@@ -530,11 +526,21 @@ dg_basic_analyses <- function(
         }
     }
 
-    p <- gridExtra::grid.arrange(grobs = plot_list,
-        nrow = ceiling(sqrt(length(plot_list))),
-        ncol = ceiling(sqrt(length(plot_list))))
-    ggplot2::ggsave(p,
-        file = file.path(dataset_folder, model_name, paste0("results/fitness_scatter_dg_relationship_", color_type, ".pdf")),
+    # plot comparison between desired datasets
+    ggplot2::ggsave(plot_list[[plot_ind]],
+        file = file.path(dataset_folder, model_name, paste0("results/fitness_scatter_dg_relationship_fA", datasets_ab[1], "_fB", datasets_ab[2], "_", color_type, ".pdf")),
         width = 4 * ceiling(sqrt(length(plot_list))),
         height = 3.5 * ceiling(sqrt(length(plot_list))))
+
+    # plot all comparisions
+    if (varlist[["no_abd_datasets"]] > 1 & varlist[["no_bind_datasets"]] > 1) {
+        p <- gridExtra::grid.arrange(grobs = plot_list,
+            nrow = ceiling(sqrt(length(plot_list))),
+            ncol = ceiling(sqrt(length(plot_list))))
+        ggplot2::ggsave(p,
+            file = file.path(dataset_folder, model_name, paste0("results/fitness_scatter_dg_relationship_all_", color_type, ".pdf")),
+            width = 4 * ceiling(sqrt(length(plot_list))),
+            height = 3.5 * ceiling(sqrt(length(plot_list))))
+    }
+
 }
