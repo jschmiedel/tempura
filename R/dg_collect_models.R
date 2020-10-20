@@ -67,7 +67,7 @@ dg_collect_models <- function(
             .SDcols = names(dt_models)[!grepl("ddg", names(dt_models))]]
         global_pars[, objective := log10(objective)]
 
-        p <- GGally::ggpairs(global_pars[objective < (min(objective) + 0.5)],
+        p <- GGally::ggpairs(global_pars[objective < min(c(min(objective) + 0.2, stats::quantile(objective, 0.9)))],
             columns = grep("^[obf]",names(global_pars)),
             ggplot2::aes(colour = factor(test_set)))
         ggplot2::ggsave(p,
@@ -83,17 +83,30 @@ dg_collect_models <- function(
 
         ## compare global parameters across best models
         if (nrow(best_models) > 1) {
-          global_pars <- best_models[,
-                .SD,
-                .SDcols = names(best_models)[!grepl("ddg", names(best_models))]]
-            global_pars[, objective := log10(objective)]
 
-            p <- GGally::ggpairs(global_pars,
-                columns = grep("^[obf]",names(global_pars)))
+            global_pars <- reshape2::melt(best_models[,
+                .SD,
+                .SDcols = names(best_models)[grepl("^[fbt]", names(best_models))]], id.vars = "test_set")
+
+            global_pars[grep("dgwt", variable), type := "dgwt"]
+            global_pars[grep("fit", variable), type := "fitness"]
+            global_pars[, type := factor(type, levels = c("dgwt", "fitness"))]
+            levels(global_pars$type) = c("dG of wild-type state", "fitness parameters of DMS dataset")
+
+            global_pars[, dataset := strsplit(as.character(variable), "_")[[1]][1], variable]
+            global_pars[grep("bf", dataset), dataset := gsub("f", "", dataset)]
+
+            p <- ggplot2::ggplot(global_pars, ggplot2::aes(x = variable, y = value, group = variable, color = dataset)) +
+                ggplot2::geom_boxplot() +
+                ggplot2::geom_point() +
+                ggplot2::facet_wrap(type ~ ., scales = "free") +
+                ggplot2::expand_limits(y = 0) +
+                ggplot2::labs(x = "", y = "estimates")
+
             ggplot2::ggsave(p,
-                file = file.path(dataset_folder, model_name, "results", "global_par_distribution_bestmodels.pdf"),
-                width = 15,
-                height = 15)
+                    file = file.path(dataset_folder, model_name, "results/global_par_distribution_bestmodels.pdf"),
+                    width = 10,
+                    height = 4)
         }
 
 
@@ -181,17 +194,18 @@ dg_collect_models <- function(
 
 
         ## average over parameters from different train/test sets
+        best_models_melt <- reshape2::melt(best_models[, .SD, .SDcols = !grepl("^[toci]", names(best_models))])
+        parameter_vec <- unique(best_models_melt$variable)
         if (model_averaging == "median") {
-            avg_model <- best_models[, lapply(.SD,stats::median), .SDcols = !grepl("^[toci]", names(best_models))]
+            avg_model <- best_models_melt[value != 0, list(value = stats::median(value)), list(parameter = variable)]
         } else if (model_averaging == "mean") {
-            avg_model <- best_models[, lapply(.SD, mean), .SDcols = !grepl("^[toci]", names(best_models))]
+            avg_model <- best_models_melt[value != 0, list(value = mean(value)), list(parameter = variable)]
         } else {
             print("model_averaging parameter not 'median' or 'mean'")
         }
-
-        # long table format
-        avg_model <- data.table(parameter = names(avg_model), value = avg_model[, unlist(.SD)])
         data.table::setkey(avg_model, parameter)
+        avg_model <- avg_model[list(parameter_vec)]
+        avg_model[is.na(value), value := 0]
 
         ## predict fitness with average model parameters
         X <- dg__fitness_from_model(
@@ -291,8 +305,8 @@ dg_collect_models <- function(
         global_pars <- model_results[["avg_model"]][!grepl("ddg", parameter)]
         global_pars[grep("dgwt", parameter), type := "dgwt"]
         global_pars[grep("fit", parameter), type := "fitness"]
-        ddg[, type := factor(type, levels = c("dgwt", "fitness"))]
-        levels(ddg$type) = c("dG of wild-type state", "fitness parameters of DMS dataset")
+        global_pars[, type := factor(type, levels = c("dgwt", "fitness"))]
+        levels(global_pars$type) = c("dG of wild-type state", "fitness parameters of DMS dataset")
 
         global_pars[, dataset := strsplit(parameter, "_")[[1]][1], parameter]
 

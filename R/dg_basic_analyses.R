@@ -531,8 +531,8 @@ dg_basic_analyses <- function(
     # plot comparison between desired datasets
     ggplot2::ggsave(plot_list[[plot_ind]],
         file = file.path(dataset_folder, model_name, paste0("results/fitness_scatter_dg_relationship_fA", datasets_ab[1], "_fB", datasets_ab[2], "_", color_type, ".pdf")),
-        width = 4 * ceiling(sqrt(length(plot_list))),
-        height = 3.5 * ceiling(sqrt(length(plot_list))))
+        width = 4,
+        height = 3.5)
 
     # plot all comparisions
     if (varlist[["no_abd_datasets"]] > 1 & varlist[["no_bind_datasets"]] > 1) {
