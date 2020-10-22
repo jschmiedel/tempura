@@ -239,6 +239,9 @@ dg_collect_models <- function(
 
     } else if (stage == "bootstrap") {
 
+        ## load dataset and parameters
+        # load varlist
+        load(file = file.path(dataset_folder, "data/fitness_dataset.RData"))
         # load parlist
         load(file = file.path(dataset_folder, model_name, "parameter_list.RData"))
         # load initial models
@@ -251,17 +254,46 @@ dg_collect_models <- function(
         for (i in 1:length(model_files)) {
           X = fread(file.path(dataset_folder, model_name, "tmp", model_files[i]))
           if (i == 1){
-            dt_models <- X
+            dt_boot <- X
           } else {
-            dt_models <- rbind(dt_models, X)
+            dt_boot <- rbind(dt_boot, X)
           }
         }
 
-        print(paste0("collected ", nrow(dt_models), " models"))
+        print(paste0("collected ", nrow(dt_boot), " bootstrapped models (", dt_boot[convergence == 0,.N], " converged)"))
+
+
+        ## compare objective of bootstrapped models to avg models
+        # for this, run the avg model quickly through the optimizer
+        # get parameters from average dG model
+        start_par <- model_results[["avg_model"]][, value]
+        names(start_par) <- model_results[["avg_model"]][, parameter]
+        varlist[["mutxvar"]] <- Matrix::t(varlist[["varxmut"]])
+        # call optimzer
+        dt_avg <- dg__model_optim(
+            start_par = start_par,
+            parlist = parlist,
+            varlist = varlist,
+            maxit = 1
+        )
+        # convert output to data.table
+        dt_avg <- data.table::data.table(
+            t(dt_avg[["par"]]),
+            dt_avg[["value"]],
+            dt_avg[["convergence"]],
+            0
+        )
+        names(dt_avg) <- c(
+            parlist[["dt_par"]][, parameter],
+            "objective",
+            "convergence",
+            "iteration"
+        )
+
 
         ## calculate mean and sd over bootstraps
-        boot_mean <- dt_models[convergence == 0, lapply(.SD,mean), .SDcols = !grepl("^[toci]", names(dt_models))]
-        boot_sd <- dt_models[convergence == 0, lapply(.SD,stats::sd), .SDcols = !grepl("^[toci]", names(dt_models))]
+        boot_mean <- dt_boot[convergence == 0 & iteration != 0, lapply(.SD,mean), .SDcols = !grepl("^[toci]", names(dt_boot))]
+        boot_sd <- dt_boot[convergence == 0 & iteration != 0, lapply(.SD,stats::sd), .SDcols = !grepl("^[toci]", names(dt_boot))]
         # long table format
         avg_boot_model <- merge(data.table(parameter = names(boot_mean),
                                             boot_mean = boot_mean[, unlist(.SD)]),
@@ -292,22 +324,38 @@ dg_collect_models <- function(
 
         # plot original versus bootstrapped (mean) values
         p <- ggplot2::ggplot(ddg, ggplot2::aes(value, boot_mean)) +
-            ggplot2::geom_point() +
+            ggplot2::geom_point(alpha = 0.1) +
             ggplot2::facet_wrap(type ~ .) +
             ggplot2::expand_limits(y = 0) +
-            ggplot2::geom_abline(linetype = 2) +
-            ggplot2::labs(x = "original estimate", y = "bootstrapped mean")
+            ggplot2::geom_hline(yintercept = 0, linetype = 2) +
+            ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+            ggplot2::geom_abline(linetype = 3, color = "red") +
+            ggplot2::labs(x = "initial estimate", y = "bootstrapped mean")
         ggplot2::ggsave(p,
-                file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg_org_bsmean.pdf"),
+                file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg_init_bsmean.pdf"),
+                width = 4 * ddg[, length(unique(type))] ,
+                height = 4)
+
+        # check how difference between original and bootstrapped (mean) values relate to bootstrapped sd
+        p <- ggplot2::ggplot(ddg, ggplot2::aes(value - boot_mean, boot_sd)) +
+            ggplot2::geom_point(alpha = 0.1) +
+            ggplot2::facet_wrap(type ~ .) +
+            ggplot2::expand_limits(y = 0) +
+            ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+            ggplot2::geom_abline(linetype = 3, color = "red", slope = c(-1, 1)) +
+            ggplot2::labs(x = "diff (initial - bootstrapped) estimate", y = "bootstrapped sd")
+        ggplot2::ggsave(p,
+                file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg_diff_bsSD.pdf"),
                 width = 4 * ddg[, length(unique(type))] ,
                 height = 4)
 
         # plot bootstrapped mean versus sd
         p <- ggplot2::ggplot(ddg, ggplot2::aes(boot_mean, boot_sd)) +
-            ggplot2::geom_point() +
+            ggplot2::geom_point(alpha = 0.1) +
             ggplot2::facet_wrap(type ~ .) +
             ggplot2::expand_limits(y = 0) +
-            ggplot2::geom_abline(linetype = 2) +
+            ggplot2::geom_hline(yintercept = 0, linetype = 2) +
+            ggplot2::geom_abline(linetype = 3, color = "red") +
             ggplot2::labs(x = "bootstrapped mean", y = "bootstrapped sd")
         ggplot2::ggsave(p,
                 file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg_mean_sd.pdf"),
@@ -317,23 +365,35 @@ dg_collect_models <- function(
 
         ## plot global parameter values
         global_pars <- model_results[["avg_model"]][!grepl("ddg", parameter)]
+
+        # add in log10(objective)
+        global_pars <- rbind(global_pars,
+            data.table(parameter = "objective",
+                value = log10(dt_avg$objective),
+                boot_mean = mean(log10(dt_boot$objective)),
+                boot_sd = stats::sd(log10(dt_boot$objective))))
+
         global_pars[grep("dgwt", parameter), type := "dgwt"]
         global_pars[grep("fit", parameter), type := "fitness"]
-        global_pars[, type := factor(type, levels = c("dgwt", "fitness"))]
-        levels(global_pars$type) = c("dG of wild-type state", "fitness parameters of DMS dataset")
+        global_pars[parameter == "objective", type := "objective"]
+
+        global_pars[, type := factor(type, levels = c("dgwt", "fitness","objective"))]
+        levels(global_pars$type) = c("dG of wild-type state", "fitness parameters of DMS dataset", "log10(objective func)")
 
         global_pars[, dataset := strsplit(parameter, "_")[[1]][1], parameter]
+        global_pars[grep("^bf", dataset), dataset := gsub("[fAB]", "", dataset)]
+        global_pars[grep("^f", dataset), dataset := gsub("[AB]", "", dataset)]
 
         p <- ggplot2::ggplot(global_pars, ggplot2::aes(value, boot_mean, color = dataset)) +
             ggplot2::geom_point() +
             ggplot2::geom_pointrange(ggplot2::aes(ymin = boot_mean - boot_sd, ymax = boot_mean + boot_sd)) +
             ggplot2::facet_wrap(type ~ ., scales = "free") +
-            ggplot2::expand_limits(y = 0) +
+            ggplot2::expand_limits(x = 0, y = 0) +
             ggplot2::geom_abline(linetype = 2) +
             ggplot2::labs(x = "initial estimate", y = "bootstrapped estimate")
         ggplot2::ggsave(p,
                 file = file.path(dataset_folder, model_name, "results/bootstrapped_global_pars.pdf"),
-                width = 10,
+                width = 13,
                 height = 4)
 
 
