@@ -94,14 +94,16 @@ dg_collect_models <- function(
             levels(global_pars$type) = c("dG of wild-type state", "fitness parameters of DMS dataset")
 
             global_pars[, dataset := strsplit(as.character(variable), "_")[[1]][1], variable]
-            global_pars[grep("bf", dataset), dataset := gsub("f", "", dataset)]
+            global_pars[grep("^bf", dataset), dataset := gsub("[fAB]", "", dataset)]
+            global_pars[grep("^f", dataset), dataset := gsub("[AB]", "", dataset)]
 
             p <- ggplot2::ggplot(global_pars, ggplot2::aes(x = variable, y = value, group = variable, color = dataset)) +
                 ggplot2::geom_boxplot() +
                 ggplot2::geom_point() +
                 ggplot2::facet_wrap(type ~ ., scales = "free") +
                 ggplot2::expand_limits(y = 0) +
-                ggplot2::labs(x = "", y = "estimates")
+                ggplot2::labs(x = "", y = "estimates") +
+                ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, hjust=1))
 
             ggplot2::ggsave(p,
                     file = file.path(dataset_folder, model_name, "results/global_par_distribution_bestmodels.pdf"),
@@ -277,8 +279,7 @@ dg_collect_models <- function(
                                               all = T)
 
 
-        ## plot mean vs sd
-        # plot ddg parameter values
+        ## plot ddg parameter values
         ddg <- model_results[["avg_model"]][grepl("ddg", parameter) & value != 0]
         ddg[, type := paste0(strsplit(parameter, "_")[[1]][2:3], collapse = "_"), parameter]
         if (parlist[["no_folded_states"]] == 1) {
@@ -289,7 +290,19 @@ dg_collect_models <- function(
             levels(ddg$type) = c("ddG of folding state A", "ddG of folding state B", "ddG of binding")
         }
 
+        # plot original versus bootstrapped (mean) values
+        p <- ggplot2::ggplot(ddg, ggplot2::aes(value, boot_mean)) +
+            ggplot2::geom_point() +
+            ggplot2::facet_wrap(type ~ .) +
+            ggplot2::expand_limits(y = 0) +
+            ggplot2::geom_abline(linetype = 2) +
+            ggplot2::labs(x = "original estimate", y = "bootstrapped mean")
+        ggplot2::ggsave(p,
+                file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg_org_bsmean.pdf"),
+                width = 4 * ddg[, length(unique(type))] ,
+                height = 4)
 
+        # plot bootstrapped mean versus sd
         p <- ggplot2::ggplot(ddg, ggplot2::aes(boot_mean, boot_sd)) +
             ggplot2::geom_point() +
             ggplot2::facet_wrap(type ~ .) +
@@ -297,11 +310,12 @@ dg_collect_models <- function(
             ggplot2::geom_abline(linetype = 2) +
             ggplot2::labs(x = "bootstrapped mean", y = "bootstrapped sd")
         ggplot2::ggsave(p,
-                file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg.pdf"),
+                file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg_mean_sd.pdf"),
                 width = 4 * ddg[, length(unique(type))] ,
                 height = 4)
 
-        # plot global parameter values
+
+        ## plot global parameter values
         global_pars <- model_results[["avg_model"]][!grepl("ddg", parameter)]
         global_pars[grep("dgwt", parameter), type := "dgwt"]
         global_pars[grep("fit", parameter), type := "fitness"]

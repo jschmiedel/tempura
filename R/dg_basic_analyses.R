@@ -66,9 +66,16 @@ dg_basic_analyses <- function(
         vd[grepl("[0-9]", aa_subs), color_type := factor(length(grep("_", aa_subs)) + 1), aa_subs]
     } else if (exists("structural_properties") == TRUE) {
         vd[!grepl("_", aa_subs) & grepl("[0-9]", aa_subs), Pos := as.integer(paste0(strsplit(aa_subs,"")[[1]][1:(nchar(aa_subs)-1)], collapse = "")), aa_subs]
-        vd <- merge(vd,
-            structural_properties[, list(Pos, color_type = factor(unlist(.SD[,1]))), .SDcols = color_type],
-            by = "Pos")
+
+        if (length(structural_properties[, unique(unlist(.SD)), .SDcols = color_type]) < 10) { #assume it's a factor
+            vd <- merge(vd,
+                structural_properties[, list(Pos, color_type = factor(unlist(.SD[,1]))), .SDcols = color_type],
+                by = "Pos")
+        } else {
+            vd <- merge(vd,
+                structural_properties[, list(Pos, color_type = unlist(.SD[,1])), .SDcols = color_type],
+                by = "Pos")
+        }
     } else {
         print("error: no structural properties file provided to color variants")
     }
