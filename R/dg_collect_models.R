@@ -347,7 +347,7 @@ dg_collect_models <- function(
             ncol = 1)
 
         ggplot2::ggsave(p,
-                file = file.path(dataset_folder, model_name, "results/bootstrapp_ddg_pars.pdf"),
+                file = file.path(dataset_folder, model_name, "results/bootstrap_ddg_pars.pdf"),
                 width = 4 * ddg[, length(unique(type))] ,
                 height = 12)
 
@@ -425,7 +425,7 @@ dg_collect_models <- function(
             nrow = 1,
             ncol = 3)
         ggplot2::ggsave(p,
-                file = file.path(dataset_folder, model_name, "results/bootstrapp_global_pars.pdf"),
+                file = file.path(dataset_folder, model_name, "results/bootstrap_global_pars.pdf"),
                 width = 13,
                 height = 4)
 

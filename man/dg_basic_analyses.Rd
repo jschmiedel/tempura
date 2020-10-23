@@ -9,7 +9,9 @@ dg_basic_analyses(
   model_name,
   color_type = "",
   max_variants = 3000,
-  datasets_ab = c(1, 1)
+  datasets_ab = c(1, 1),
+  stage = "",
+  fdr_thres = 0.01
 )
 }
 \arguments{
@@ -22,6 +24,10 @@ dg_basic_analyses(
 \item{max_variants}{maximual number of variants to plot, default = 3e3, will be downsampled if # variants > max_variants}
 
 \item{datasets_ab}{index of datasets to use (in case multiple abundance or binding datasets were supplied)}
+
+\item{stage}{specifies the stage ("model" or "bootstrap") from which to plot results, default = "" uses bootstrapped results if they are detected, initial model results otherwise}
+
+\item{fdr_thres}{FDR cutoff to call ddg value significantly different from zero (if plotting bootstrapped parameter estimates), default = 0.1}
 }
 \description{
 Produces some basic analyses plots
