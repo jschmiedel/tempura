@@ -2,7 +2,7 @@
 #'
 #' @param dataset_folder absolute path to the dataset folder, is created if non-existent
 #' @param model_name name of the model that should be computed on the dataset
-#' @param model_averaging c("median" [default], "mean"), how to average estimated parameters over different train/test sets
+#' @param model_averaging c("mean" [default], "median"), how to average estimated parameters over different train/test sets
 #' @param which_test_set for 0, the default, reads individual models from training/test sets, for a number greater 0, only reads models from this training/test set
 #' @param stage c("model" [default], "bootstrap", "pll"), which stage to collect models from, for bootstrap and pll stage, the functions adds their results to the dg_model.txt table
 #'
@@ -15,28 +15,25 @@
 dg_collect_models <- function(
     dataset_folder,
     model_name,
-    model_averaging = "median",
+    model_averaging = "mean",
     which_test_set = 0,
     stage = "model"
 ){
 
-    objective <- test_set <- varlist <- parlist <- x <- y <- value <- variable <- parameter <- convergence <- type <- dataset <- NULL
+    objective <- test_set <- varlist <- parlist <- x <- y <- value <- variable <- parameter <- convergence <- type <- dataset <- dgwt_type <- fit_type <- iteration <- NULL
 
     ggplot2::theme_set(ggplot2::theme_bw(base_size = 8))
+
+    ## load dataset and parameters
+    # load varlist
+    load(file = file.path(dataset_folder, "data/fitness_dataset.RData"))
+    # load parlist
+    load(file = file.path(dataset_folder, model_name, "parameter_list.RData"))
 
     if (stage == "model") {
 
         ## create results folder
         dir.create(file.path(dataset_folder, model_name, "results"))
-
-
-        ## load dataset and parameters
-        # load varlist
-        load(file = file.path(dataset_folder, "data/fitness_dataset.RData"))
-        # load parlist
-        load(file = file.path(dataset_folder, model_name, "parameter_list.RData"))
-
-
 
         ## collect all models from tmp folder
         model_files <- list.files(file.path(dataset_folder, model_name, "tmp"))
@@ -239,12 +236,7 @@ dg_collect_models <- function(
 
     } else if (stage == "bootstrap") {
 
-        ## load dataset and parameters
-        # load varlist
-        load(file = file.path(dataset_folder, "data/fitness_dataset.RData"))
-        # load parlist
-        load(file = file.path(dataset_folder, model_name, "parameter_list.RData"))
-        # load initial models
+        ## load initial models
         load(file = file.path(dataset_folder, model_name, "model_results.RData"))
 
 
@@ -323,7 +315,7 @@ dg_collect_models <- function(
         }
 
         # plot original versus bootstrapped (mean) values
-        p <- ggplot2::ggplot(ddg, ggplot2::aes(value, boot_mean)) +
+        p1 <- ggplot2::ggplot(ddg, ggplot2::aes(value, boot_mean)) +
             ggplot2::geom_point(alpha = 0.1) +
             ggplot2::facet_wrap(type ~ .) +
             ggplot2::expand_limits(y = 0) +
@@ -331,36 +323,33 @@ dg_collect_models <- function(
             ggplot2::geom_vline(xintercept = 0, linetype = 2) +
             ggplot2::geom_abline(linetype = 3, color = "red") +
             ggplot2::labs(x = "initial estimate", y = "bootstrapped mean")
-        ggplot2::ggsave(p,
-                file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg_init_bsmean.pdf"),
-                width = 4 * ddg[, length(unique(type))] ,
-                height = 4)
-
-        # check how difference between original and bootstrapped (mean) values relate to bootstrapped sd
-        p <- ggplot2::ggplot(ddg, ggplot2::aes(value - boot_mean, boot_sd)) +
-            ggplot2::geom_point(alpha = 0.1) +
-            ggplot2::facet_wrap(type ~ .) +
-            ggplot2::expand_limits(y = 0) +
-            ggplot2::geom_vline(xintercept = 0, linetype = 2) +
-            ggplot2::geom_abline(linetype = 3, color = "red", slope = c(-1, 1)) +
-            ggplot2::labs(x = "diff (initial - bootstrapped) estimate", y = "bootstrapped sd")
-        ggplot2::ggsave(p,
-                file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg_diff_bsSD.pdf"),
-                width = 4 * ddg[, length(unique(type))] ,
-                height = 4)
 
         # plot bootstrapped mean versus sd
-        p <- ggplot2::ggplot(ddg, ggplot2::aes(boot_mean, boot_sd)) +
+        p2 <- ggplot2::ggplot(ddg, ggplot2::aes(boot_mean, boot_sd)) +
             ggplot2::geom_point(alpha = 0.1) +
             ggplot2::facet_wrap(type ~ .) +
             ggplot2::expand_limits(y = 0) +
             ggplot2::geom_hline(yintercept = 0, linetype = 2) +
             ggplot2::geom_abline(linetype = 3, color = "red") +
             ggplot2::labs(x = "bootstrapped mean", y = "bootstrapped sd")
+
+        # check how difference between original and bootstrapped (mean) values relate to bootstrapped sd
+        p3 <- ggplot2::ggplot(ddg, ggplot2::aes(value - boot_mean, boot_sd)) +
+            ggplot2::geom_point(alpha = 0.1) +
+            ggplot2::facet_wrap(type ~ .) +
+            ggplot2::expand_limits(y = 0) +
+            ggplot2::geom_vline(xintercept = 0, linetype = 2) +
+            ggplot2::geom_abline(linetype = 3, color = "red", slope = c(-1, 1)) +
+            ggplot2::labs(x = "diff (initial - bootstrapped) estimate", y = "bootstrapped sd")
+
+        p <- gridExtra::grid.arrange(grobs = list(p1, p2, p3),
+            nrow = 3,
+            ncol = 1)
+
         ggplot2::ggsave(p,
-                file = file.path(dataset_folder, model_name, "results/bootstrapped_ddg_mean_sd.pdf"),
+                file = file.path(dataset_folder, model_name, "results/bootstrapp_ddg_pars.pdf"),
                 width = 4 * ddg[, length(unique(type))] ,
-                height = 4)
+                height = 12)
 
 
         ## plot global parameter values
@@ -377,22 +366,66 @@ dg_collect_models <- function(
         global_pars[grep("fit", parameter), type := "fitness"]
         global_pars[parameter == "objective", type := "objective"]
 
-        global_pars[, type := factor(type, levels = c("dgwt", "fitness","objective"))]
-        levels(global_pars$type) = c("dG of wild-type state", "fitness parameters of DMS dataset", "log10(objective func)")
+        # global_pars[, type := factor(type, levels = c("dgwt", "fitness","objective"))]
+        # levels(global_pars$type) = c("dG of wild-type state", "fitness parameters of DMS dataset", "log10(objective func)")
 
         global_pars[, dataset := strsplit(parameter, "_")[[1]][1], parameter]
         global_pars[grep("^bf", dataset), dataset := gsub("[fAB]", "", dataset)]
         global_pars[grep("^f", dataset), dataset := gsub("[AB]", "", dataset)]
 
-        p <- ggplot2::ggplot(global_pars, ggplot2::aes(value, boot_mean, color = dataset)) +
+        global_pars[type == "dgwt" & grepl("^b?f", parameter), dgwt_type := "folding"]
+        global_pars[type == "dgwt" & grepl("^b[^f]", parameter), dgwt_type := "binding"]
+        p1 <- ggplot2::ggplot(global_pars[type == "dgwt"],
+                ggplot2::aes(value,
+                    boot_mean,
+                    color = dataset,
+                    shape = dgwt_type)) +
             ggplot2::geom_point() +
             ggplot2::geom_pointrange(ggplot2::aes(ymin = boot_mean - boot_sd, ymax = boot_mean + boot_sd)) +
-            ggplot2::facet_wrap(type ~ ., scales = "free") +
             ggplot2::expand_limits(x = 0, y = 0) +
             ggplot2::geom_abline(linetype = 2) +
-            ggplot2::labs(x = "initial estimate", y = "bootstrapped estimate")
+            ggplot2::labs(title = "wild-type dG",
+                x = "initial estimate",
+                y = "bootstrapped estimate (+-sd)")
+
+        global_pars[type == "fitness" & grepl("fit0", parameter), fit_type := "background"]
+        global_pars[type == "fitness" & grepl("fitwt", parameter), fit_type := "wild-type"]
+        p2 <- ggplot2::ggplot(global_pars[type == "fitness"],
+                ggplot2::aes(value,
+                    boot_mean,
+                    color = dataset,
+                    shape = fit_type)) +
+            ggplot2::geom_point() +
+            ggplot2::geom_pointrange(ggplot2::aes(ymin = boot_mean - boot_sd, ymax = boot_mean + boot_sd)) +
+            ggplot2::expand_limits(x = c(0,1), y = c(0,1)) +
+            ggplot2::scale_x_continuous(breaks = seq(0,1,0.25)) +
+            ggplot2::scale_y_continuous(breaks = seq(0,1,0.25)) +
+            ggplot2::geom_abline(linetype = 2) +
+            ggplot2::labs(title = "fitness parameters DMS dataset",
+                x = "initial estimate",
+                y = "bootstrapped estimate (+-sd)")
+
+        p3 <- ggplot2::ggplot(global_pars[type == "objective"],
+                ggplot2::aes(value,
+                    boot_mean)) +
+            ggplot2::geom_point() +
+            ggplot2::geom_pointrange(ggplot2::aes(ymin = boot_mean - boot_sd, ymax = boot_mean + boot_sd)) +
+            ggplot2::scale_x_continuous(
+                limits = global_pars[type == "objective", c(value - 0.5, value + 0.5)],
+                breaks = seq(0,10,0.25)) +
+            ggplot2::scale_y_continuous(
+                limits = global_pars[type == "objective", c(boot_mean - 0.5, boot_mean + 0.5)],
+                breaks = seq(0,10,0.25)) +
+            ggplot2::geom_abline(linetype = 2) +
+            ggplot2::labs(title = "value objective function",
+                x = "initial estimate",
+                y = "bootstrapped estimate (+-sd)")
+
+        p <- gridExtra::grid.arrange(grobs = list(p1, p2, p3),
+            nrow = 1,
+            ncol = 3)
         ggplot2::ggsave(p,
-                file = file.path(dataset_folder, model_name, "results/bootstrapped_global_pars.pdf"),
+                file = file.path(dataset_folder, model_name, "results/bootstrapp_global_pars.pdf"),
                 width = 13,
                 height = 4)
 

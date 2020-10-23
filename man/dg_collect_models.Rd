@@ -7,7 +7,7 @@
 dg_collect_models(
   dataset_folder,
   model_name,
-  model_averaging = "median",
+  model_averaging = "mean",
   which_test_set = 0,
   stage = "model"
 )
@@ -17,7 +17,7 @@ dg_collect_models(
 
 \item{model_name}{name of the model that should be computed on the dataset}
 
-\item{model_averaging}{c("median" [default], "mean"), how to average estimated parameters over different train/test sets}
+\item{model_averaging}{c("mean" [default], "median"), how to average estimated parameters over different train/test sets}
 
 \item{which_test_set}{for 0, the default, reads individual models from training/test sets, for a number greater 0, only reads models from this training/test set}
 
