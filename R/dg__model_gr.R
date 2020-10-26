@@ -47,6 +47,7 @@ dg__model_gr <- function(
   	## folding phenotype
     gradient_f = list()
     for (i in 1:varlist[["no_abd_datasets"]]) {
+      if (parlist[["fix_dgwt"]] == FALSE) {
         gradient_f[[i]] <- convert_dg2foldinggradient(
             f_ddg = f_ddg,
             f_ddg_var = f_ddg_var,
@@ -60,12 +61,29 @@ dg__model_gr <- function(
             no_folded_states = parlist[["no_folded_states"]],
             lambda = parlist[["lambda"]]
         )
+      } else {
+        gradient_f[[i]] <- convert_dg2foldinggradient(
+            f_ddg = f_ddg,
+            f_ddg_var = f_ddg_var,
+            f_dgwt = global_par[grep("^f[AB]?_dgwt", names(global_par))],
+            f_fitwt = global_par[grep(paste0("f", i, "_fitwt"), names(global_par))],
+            f_fit0 = global_par[grep(paste0("f", i, "_fit0"), names(global_par))],
+            fitness = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("f", i, "_fitness")],
+            w = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("f", i, "_sigma")],
+            mutxvar = varlist[["mutxvar"]],
+            fitness_scale = varlist[["fitness_scale"]],
+            no_folded_states = parlist[["no_folded_states"]],
+            lambda = parlist[["lambda"]]
+        )
+      }
+
     }
 
 
     ## binding phenotype
     gradient_b = list()
     for (i in 1:varlist[["no_bind_datasets"]]) {
+      if (parlist[["fix_dgwt"]] == FALSE) {
         gradient_b[[i]] <- convert_dg2bindinggradient(
             b_ddg = b_ddg,
             f_ddg = f_ddg,
@@ -82,6 +100,24 @@ dg__model_gr <- function(
             no_folded_states = parlist[["no_folded_states"]],
             lambda = parlist[["lambda"]]
         )
+      } else {
+        gradient_b[[i]] <- convert_dg2bindinggradient(
+            b_ddg = b_ddg,
+            f_ddg = f_ddg,
+            b_ddg_var = b_ddg_var,
+            f_ddg_var = f_ddg_var,
+            b_dgwt = global_par[grep("b_dgwt", names(global_par))],
+            f_dgwt = global_par[grep("^f[AB]?_dgwt", names(global_par))],
+            b_fitwt = global_par[grep(paste0("b", i, "_fitwt"), names(global_par))],
+            b_fit0 = global_par[grep(paste0("b", i, "_fit0"), names(global_par))],
+            fitness = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("b", i, "_fitness")],
+            w = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("b", i, "_sigma")],
+            mutxvar = varlist[["mutxvar"]],
+            fitness_scale = varlist[["fitness_scale"]],
+            no_folded_states = parlist[["no_folded_states"]],
+            lambda = parlist[["lambda"]]
+        )
+      }
     }
 
 
@@ -93,17 +129,21 @@ dg__model_gr <- function(
                 rowSums(sapply(b_idx, FUN = function(b_idx){as.numeric(gradient_b[[b_idx]][["f_ddg"]])}))
         names_f_ddg <- paste0(varlist[["mut_list"]][, mutation], "_f_ddg")
 
-        gr_f_dgwt <- c()
-        for (i in f_idx) {
-          gr_f_dgwt[i] <- gradient_f[[i]][["f_dgwt"]]
+        if (parlist[["fix_dgwt"]] == FALSE) {
+          gr_f_dgwt <- c()
+          for (i in f_idx) {
+            gr_f_dgwt[i] <- gradient_f[[i]][["f_dgwt"]]
+          }
+          for (i in b_idx) {
+            gr_f_dgwt[i + varlist[["no_abd_datasets"]]] <- gradient_b[[i]][["f_dgwt"]]
+          }
+          names_f_dgwt <- c(paste0("f", f_idx, "_dgwt"), paste0("bf", b_idx, "_dgwt"))
+        } else {
+          gr_f_dgwt <- rowSums(sapply(f_idx, FUN = function(f_idx) {as.numeric(gradient_f[[f_idx]]["f_dgwt"])})) +
+            rowSums(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["f_dgwt"])}))
+          names_f_dgwt <- paste0("f_dgwt")
         }
-        names_f_dgwt <- paste0("f", f_idx, "_dgwt")
 
-        gr_bf_dgwt <- c()
-        for (i in b_idx) {
-          gr_bf_dgwt[i] <- gradient_b[[i]][["f_dgwt"]]
-        }
-        names_bf_dgwt <- paste0("bf", b_idx, "_dgwt")
     } else {
         gr_fA_ddg <- rowSums(sapply(f_idx, FUN = function(f_idx){as.numeric(gradient_f[[f_idx]][["fA_ddg"]])})) +
                 rowSums(sapply(b_idx, FUN = function(b_idx){as.numeric(gradient_b[[b_idx]][["fA_ddg"]])}))
@@ -113,23 +153,30 @@ dg__model_gr <- function(
         names_f_ddg <- c(paste0(varlist[["mut_list"]][, mutation], "_fA_ddg"),
                         paste0(varlist[["mut_list"]][, mutation], "_fB_ddg"))
 
-        gr_fA_dgwt <- c()
-        gr_fB_dgwt <- c()
-        for (i in f_idx) {
-          gr_fA_dgwt[i] <- gradient_f[[i]][["fA_dgwt"]]
-          gr_fB_dgwt[i] <- gradient_f[[i]][["fB_dgwt"]]
+        if (parlist[["fix_dgwt"]] == FALSE) {
+          gr_fA_dgwt <- c()
+          gr_fB_dgwt <- c()
+          for (i in f_idx) {
+            gr_fA_dgwt[i] <- gradient_f[[i]][["fA_dgwt"]]
+            gr_fB_dgwt[i] <- gradient_f[[i]][["fB_dgwt"]]
+          }
+          gr_bfA_dgwt <- c()
+          gr_bfB_dgwt <- c()
+          for (i in b_idx) {
+            gr_bfA_dgwt[i] <- gradient_b[[i]][["fA_dgwt"]]
+            gr_bfB_dgwt[i] <- gradient_b[[i]][["fB_dgwt"]]
+          }
+          gr_f_dgwt <- c(gr_fA_dgwt, gr_fB_dgwt, gr_bfA_dgwt, gr_bfB_dgwt)
+          names_f_dgwt <- c(paste0("fA", f_idx, "_dgwt"), paste0("fB", f_idx, "_dgwt"),
+                            paste0("bfA", b_idx, "_dgwt"), paste0("bfB", b_idx, "_dgwt"))
+        } else {
+          gr_fA_dgwt <- rowSums(sapply(f_idx, FUN = function(f_idx) {as.numeric(gradient_f[[f_idx]]["fA_dgwt"])})) +
+            rowSums(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["fA_dgwt"])}))
+          gr_fB_dgwt <- rowSums(sapply(f_idx, FUN = function(f_idx) {as.numeric(gradient_f[[f_idx]]["fB_dgwt"])})) +
+            rowSums(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["fB_dgwt"])}))
+          gr_f_dgwt <- c(gr_fA_dgwt, gr_fB_dgwt)
+          names_f_dgwt <- c("fA_dgwt", "fB_dgwt")
         }
-        gr_f_dgwt <- c(gr_fA_dgwt, gr_fB_dgwt)
-        names_f_dgwt <- c(paste0("fA", f_idx, "_dgwt"), paste0("fB", f_idx, "_dgwt"))
-
-        gr_bfA_dgwt <- c()
-        gr_bfB_dgwt <- c()
-        for (i in b_idx) {
-          gr_bfA_dgwt[i] <- gradient_b[[i]][["fA_dgwt"]]
-          gr_bfB_dgwt[i] <- gradient_b[[i]][["fB_dgwt"]]
-        }
-        gr_bf_dgwt <- c(gr_bfA_dgwt, gr_bfB_dgwt)
-        names_bf_dgwt <- c(paste0("bfA", b_idx, "_dgwt"), paste0("bfB", b_idx, "_dgwt"))
     }
 
     gr_b_ddg <- rowSums(sapply(b_idx, FUN = function(b_idx){as.numeric(gradient_b[[b_idx]][["b_ddg"]])}))
@@ -144,30 +191,39 @@ dg__model_gr <- function(
     names_f_fitwt <- paste0("f", f_idx, "_fitwt")
     names_f_fit0 <- paste0("f", f_idx, "_fit0")
 
-    gr_b_dgwt <- c()
     gr_b_fitwt <- c()
     gr_b_fit0 <- c()
     for (i in b_idx) {
-      gr_b_dgwt[i] <- gradient_b[[i]][["b_dgwt"]]
       gr_b_fitwt[i] <- gradient_b[[i]][["b_fitwt"]]
       gr_b_fit0[i] <- gradient_b[[i]][["b_fit0"]]
     }
-    names_b_dgwt <- paste0("b", b_idx, "_dgwt")
     names_b_fitwt <- paste0("b", b_idx, "_fitwt")
     names_b_fit0 <- paste0("b", b_idx, "_fit0")
+
+    if (parlist[["fix_dgwt"]] == FALSE) {
+      gr_b_dgwt <- c()
+      for (i in b_idx) {
+        gr_b_dgwt[i] <- gradient_b[[i]][["b_dgwt"]]
+      }
+      names_b_dgwt <- paste0("b", b_idx, "_dgwt")
+    } else {
+      gr_b_dgwt <- rowSums(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["b_dgwt"])}))
+      names_b_dgwt <- paste0("b_dgwt")
+    }
+
 
     # collect gradients
     gradient <- c(
       gr_f_ddg,
       gr_b_ddg,
       gr_f_dgwt, gr_f_fitwt, gr_f_fit0,
-      gr_b_dgwt, gr_bf_dgwt, gr_b_fitwt, gr_b_fit0
+      gr_b_dgwt, gr_b_fitwt, gr_b_fit0
     )
     names(gradient) <- c(
       names_f_ddg,
       names_b_ddg,
       names_f_dgwt, names_f_fitwt, names_f_fit0,
-      names_b_dgwt, names_bf_dgwt, names_b_fitwt, names_b_fit0
+      names_b_dgwt, names_b_fitwt, names_b_fit0
     )
 
     gradient <- gradient[order(match(names(gradient),names(par)))]
