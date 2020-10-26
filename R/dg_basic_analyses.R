@@ -26,7 +26,8 @@ dg_basic_analyses <- function(
   varlist <- parlist <- f_ddg <- parameter <- value <- fA_ddg <- fB_ddg <-
     b_ddg <- aa_subs <- Pos <- b_ddg_fdr <- b_ddg_sd <- boot_mean <- boot_sd <-
     fA_ddg_fdr <- fA_ddg_sd <- fB_ddg_fdr <- fB_ddg_sd <- f_ddg_fdr <-
-    f_ddg_sd <- NULL
+    f_ddg_sd <- plot_sd <- structural_property <- structural_property_value <-
+    value_sd <- variable <- x <- y <- NULL
 
   ggplot2::theme_set(ggplot2::theme_bw(base_size = 8))
   col_purple = "#9161A8"
@@ -877,7 +878,7 @@ dg_basic_analyses <- function(
       height = 3.5)
 
   # plot all comparisions
-  if (varlist[["no_abd_datasets"]] > 1 & varlist[["no_bind_datasets"]] > 1) {
+  if (varlist[["no_abd_datasets"]] > 1 | varlist[["no_bind_datasets"]] > 1) {
       # p <-
       ggplot2::ggsave(gridExtra::grid.arrange(grobs = plot_list,
                         nrow = ceiling(sqrt(length(plot_list))),
@@ -905,22 +906,45 @@ dg_basic_analyses <- function(
         by = "Pos")
 
     vd_plot_melt1 <- reshape2::melt(vd_plot,
-      id.vars = c("color_type", grep("^[bf][AB]?_ddg$", names(vd_plot), value = T)),
-      measure.vars = c("HAmin_ligand", "RSA_unbound"))
-    names(vd_plot_melt1)[names(vd_plot_melt1) == "variable"] <- "structural_property"
-    names(vd_plot_melt1)[names(vd_plot_melt1) == "value"] <- "structural_property_value"
+      id.vars = c("aa_subs", "color_type", grep("^[bf][AB]?_ddg", names(vd_plot), value = T)),
+      measure.vars = c("scHAmin_ligand", "RSA_unbound"))
+    setnames(vd_plot_melt1, "variable", "structural_property")
+    vd_plot_melt1[, structural_property := factor(structural_property, levels = c("RSA_unbound", "scHAmin_ligand"))]
+    levels(vd_plot_melt1$structural_property) <- c("rel. surface accessibility", "distance to ligand")
+    setnames(vd_plot_melt1, "value", "structural_property_value")
 
     vd_plot_melt2 <- reshape2::melt(vd_plot_melt1,
-      id.vars = c("color_type", grep("structural", names(vd_plot_melt1), value = T)),
-      measure.vars = grep("ddg", names(vd_plot_melt1), value = T))
+      id.vars = c("aa_subs", "color_type", grep("structural", names(vd_plot_melt1), value = T)),
+      measure.vars = grep("ddg$", names(vd_plot_melt1), value = T))
+
+    if (stage == "bootstrap") { # add in parameter uncertainty
+      vd_plot_melt3 <- reshape2::melt(vd_plot_melt1,
+        id.vars = c("aa_subs", "color_type", grep("structural", names(vd_plot_melt1), value = T)),
+        measure.vars = grep("ddg_sd$", names(vd_plot_melt1), value = T))
+      vd_plot_melt3[, variable := gsub("_sd", "", variable), variable]
+      setnames(vd_plot_melt3, "value", "value_sd")
+      vd_plot_melt2 <- merge(vd_plot_melt2,
+          vd_plot_melt3,
+          by = c("aa_subs", "color_type", "structural_property", "structural_property_value", "variable"), all.x = T)
+    }
 
     p <- ggplot2::ggplot(vd_plot_melt2,
-        ggplot2::aes(structural_property_value, value)) +
-      ggplot2::geom_point(ggplot2::aes(color = color_type)) +
-      ggplot2::geom_smooth(span = 0.5, color = "black") +
-      ggplot2::geom_hline(yintercept = 0, linetype = 3) +
+        ggplot2::aes(structural_property_value, value))
+    if (stage == "bootstrap") {
+      vd_plot_melt2[, plot_sd := value_sd + stats::quantile(value_sd, 0.25)]
+      vd_plot_melt2[, plot_sd := plot_sd / min(plot_sd)]
+      p <- p + ggplot2::geom_point(ggplot2::aes(color = color_type, alpha = (1/plot_sd)^2)) +
+        ggplot2::geom_smooth(ggplot2::aes(weight = (1/plot_sd)^2), span = 0.5, color = "black")
+    } else {
+      p <- p + ggplot2::geom_point(ggplot2::aes(color = color_type)) +
+        ggplot2::geom_smooth(span = 0.5, color = "black")
+    }
+    p <- p + ggplot2::geom_hline(yintercept = 0, linetype = 3) +
       ggplot2::facet_grid(variable ~ structural_property, scales = "free") +
-      ggplot2::labs(y = "ddG values", color = color_type)
+      ggplot2::labs(y = "ddG values",
+        x = "sructural value (%RSA or distance[A])",
+        color = color_type,
+        alpha = "rel. ddG certainty")
     if (is.factor(vd_plot$color_type)) {
         p <- p + ggplot2::scale_color_brewer(palette = "Set1")
     } else {
