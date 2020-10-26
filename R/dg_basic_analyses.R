@@ -22,12 +22,13 @@ dg_basic_analyses <- function(
     stage = "",
     fdr_thres = 0.01
 ){
-
+1
   varlist <- parlist <- f_ddg <- parameter <- value <- fA_ddg <- fB_ddg <-
     b_ddg <- aa_subs <- Pos <- b_ddg_fdr <- b_ddg_sd <- boot_mean <- boot_sd <-
     fA_ddg_fdr <- fA_ddg_sd <- fB_ddg_fdr <- fB_ddg_sd <- f_ddg_fdr <-
-    f_ddg_sd <- plot_sd <- structural_property <- structural_property_value <-
-    value_sd <- variable <- x <- y <- NULL
+    f_ddg_sd <- RSA_unbound <- ddg <- ddg_sd <- ddg_type <- ddg_weight <-
+    scHAmin_ligand <- structural_property <- structural_property_value <- y <-
+    NULL
 
   ggplot2::theme_set(ggplot2::theme_bw(base_size = 8))
   col_purple = "#9161A8"
@@ -95,11 +96,12 @@ dg_basic_analyses <- function(
   ## define helper pars and include structural properties
   vd <- copy(model_results[["variant_data"]])
 
-  # note position
+  # note position for singles
   vd[!grepl("_", aa_subs) & grepl("[0-9]", aa_subs), Pos := as.integer(paste0(strsplit(aa_subs,"")[[1]][1:(nchar(aa_subs)-1)], collapse = "")), aa_subs]
 
   if (color_type == "") {
       vd[, color_type := factor("all vars")]
+      color_type = "allvars"
   } else if (color_type == "Nmut") {
       vd[grepl("[0-9]", aa_subs), color_type := factor(length(grep("_", aa_subs)) + 1), aa_subs]
   } else if (exists("structural_properties") == TRUE) {
@@ -897,52 +899,85 @@ dg_basic_analyses <- function(
   ##################################################################
   if (file.exists(file.path(dataset_folder, "data/structural_properties.txt"))) {
 
-    # select variants that match a color_type and have at least one measured folding and binding value each
-    vd_plot <- vd[!is.na(color_type), x := rowSums(!is.na(.SD)) > 0, .SDcols = grep("f[0-9]*_fitness", names(vd))][
+    # select single mutants that match a color_type and have at least one measured folding and binding value each
+    vd_plot <- vd[!is.na(Pos) & !is.na(color_type), x := rowSums(!is.na(.SD)) > 0, .SDcols = grep("f[0-9]*_fitness", names(vd))][
       x == TRUE, y := rowSums(!is.na(.SD)) > 0, .SDcols = grep("b[0-9]*_fitness", names(vd))][y == TRUE]
 
-    vd_plot <- merge(vd_plot,
-        structural_properties,
-        by = "Pos")
-
-    vd_plot_melt1 <- reshape2::melt(vd_plot,
-      id.vars = c("aa_subs", "color_type", grep("^[bf][AB]?_ddg", names(vd_plot), value = T)),
-      measure.vars = c("scHAmin_ligand", "RSA_unbound"))
-    setnames(vd_plot_melt1, "variable", "structural_property")
-    vd_plot_melt1[, structural_property := factor(structural_property, levels = c("RSA_unbound", "scHAmin_ligand"))]
-    levels(vd_plot_melt1$structural_property) <- c("rel. surface accessibility", "distance to ligand")
-    setnames(vd_plot_melt1, "value", "structural_property_value")
-
-    vd_plot_melt2 <- reshape2::melt(vd_plot_melt1,
-      id.vars = c("aa_subs", "color_type", grep("structural", names(vd_plot_melt1), value = T)),
-      measure.vars = grep("ddg$", names(vd_plot_melt1), value = T))
-
-    if (stage == "bootstrap") { # add in parameter uncertainty
-      vd_plot_melt3 <- reshape2::melt(vd_plot_melt1,
-        id.vars = c("aa_subs", "color_type", grep("structural", names(vd_plot_melt1), value = T)),
-        measure.vars = grep("ddg_sd$", names(vd_plot_melt1), value = T))
-      vd_plot_melt3[, variable := gsub("_sd", "", variable), variable]
-      setnames(vd_plot_melt3, "value", "value_sd")
-      vd_plot_melt2 <- merge(vd_plot_melt2,
-          vd_plot_melt3,
-          by = c("aa_subs", "color_type", "structural_property", "structural_property_value", "variable"), all.x = T)
+    dg_list <- grep("^[bf][AB]?_ddg$", names(vd_plot), value = T)
+    for (dg_idx in dg_list) {
+      if (stage == "model") {
+      x <- vd_plot[, list(color_type = unique(color_type),
+                        ddg_type = dg_idx,
+                        ddg = mean(unlist(.SD[, 1])),
+                        ddg_sd = stats::sd(unlist(.SD[, 1]))),
+          Pos, .SDcols = dg_idx]
+      } else if (stage == "bootstrap"){
+        vd_plot[, paste0(dg_idx, "_sd_reg") := .SD +
+              stats::quantile(vd_plot[, unlist(.SD), .SDcols = paste0(dg_idx, "_sd")], 0.25),
+              Pos,
+              .SDcols = paste0(dg_idx, "_sd")]
+        x <- vd_plot[, list(color_type = unique(color_type),
+                          ddg_type = dg_idx,
+                          ddg = sum(unlist(.SD[, 1])/unlist(.SD[, 2])^2)/sum(1/unlist(.SD[, 2])^2),
+                          ddg_sd = stats::sd(unlist(.SD[, 1])),
+                          ddg_weight = sum(1/unlist(.SD[, 2])^2)),
+            Pos, .SDcols = c(dg_idx, paste0(dg_idx, "_sd_reg"))]
+        x[, ddg_weight := ddg_weight / max(ddg_weight)]
+      }
+      if (dg_idx == dg_list[1]) {
+        vd_pos <- x
+        names(x) <- gsub("ddg", dg_idx, names(x))
+        vd_write <- x
+      } else {
+        vd_pos <- rbind(vd_pos, x)
+        names(x) <- gsub("ddg", dg_idx, names(x))
+        x <- x[,.SD, .SDcols = !grepl("color_type", names(x))]
+        vd_write <- merge(vd_write, x)
+      }
     }
 
-    p <- ggplot2::ggplot(vd_plot_melt2,
-        ggplot2::aes(structural_property_value, value))
+    vd_pos[, ddg_type := factor(ddg_type, levels = dg_list)]
+
+    vd_pos <- merge(
+      vd_pos,
+      structural_properties[, list(Pos, scHAmin_ligand, RSA_unbound)],
+        by = "Pos")
+    vd_write <- merge(
+      vd_write,
+      structural_properties[, list(Pos, scHAmin_ligand, RSA_unbound)],
+        by = "Pos")
+
+    vd_pos1 <- reshape2::melt(vd_pos,
+      id.vars = c("Pos", "color_type", grep("ddg", names(vd_pos), value = T)),
+      measure.vars = c("scHAmin_ligand", "RSA_unbound"))
+    setnames(vd_pos1, "variable", "structural_property")
+    vd_pos1[, structural_property := factor(structural_property, levels = c("RSA_unbound", "scHAmin_ligand"))]
+    levels(vd_pos1$structural_property) <- c("rel. surface accessibility", "distance to ligand")
+    setnames(vd_pos1, "value", "structural_property_value")
+
+
     if (stage == "bootstrap") {
-      vd_plot_melt2[, plot_sd := value_sd + stats::quantile(value_sd, 0.25)]
-      vd_plot_melt2[, plot_sd := plot_sd / min(plot_sd)]
-      p <- p + ggplot2::geom_point(ggplot2::aes(color = color_type, alpha = (1/plot_sd)^2)) +
-        ggplot2::geom_smooth(ggplot2::aes(weight = (1/plot_sd)^2), span = 0.5, color = "black")
+      p <- ggplot2::ggplot(vd_pos1,
+          ggplot2::aes(structural_property_value, ddg)) +
+          ggplot2::geom_pointrange(ggplot2::aes(
+            color = color_type,
+            ymin = ddg - ddg_sd,
+            ymax = ddg + ddg_sd,
+            alpha = ddg_weight)) +
+          ggplot2::geom_smooth(ggplot2::aes(weight = ddg_weight), span = 0.5, color = "black")
     } else {
-      p <- p + ggplot2::geom_point(ggplot2::aes(color = color_type)) +
+      p <- ggplot2::ggplot(x,
+        ggplot2::aes(structural_property_value, ddg)) +
+        ggplot2::geom_pointrange(ggplot2::aes(
+          color = color_type,
+          ymin = ddg - ddg_sd,
+          ymax = ddg + ddg_sd)) +
         ggplot2::geom_smooth(span = 0.5, color = "black")
     }
     p <- p + ggplot2::geom_hline(yintercept = 0, linetype = 3) +
-      ggplot2::facet_grid(variable ~ structural_property, scales = "free") +
-      ggplot2::labs(y = "ddG values",
-        x = "sructural value (%RSA or distance[A])",
+      ggplot2::facet_grid(ddg_type ~ structural_property, scales = "free") +
+      ggplot2::labs(y = "ddG values [+- SD over values per position]",
+        x = "structural value (%RSA or distance[A])",
         color = color_type,
         alpha = "rel. ddG certainty")
     if (is.factor(vd_plot$color_type)) {
@@ -957,5 +992,12 @@ dg_basic_analyses <- function(
                   ifelse(stage == "bootstrap", "_boot",""), ".pdf")),
       width = 8,
       height = (parlist[["no_folded_states"]] + 1) * 3.5)
+
+    # write results to file
+    utils::write.table(vd_write,
+      file = file.path(dataset_folder, model_name,
+          paste0("results/dG_structural_properties",
+                  ifelse(stage == "bootstrap", "_boot",""), ".txt")),
+      quote = F, row.names = F, sep = "\t")
   }
 }
