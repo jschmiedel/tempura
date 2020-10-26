@@ -92,13 +92,16 @@ dg_basic_analyses <- function(
   }
 
   ## define helper pars and include structural properties
-  vd <- model_results[["variant_data"]]
+  vd <- copy(model_results[["variant_data"]])
+
+  # note position
+  vd[!grepl("_", aa_subs) & grepl("[0-9]", aa_subs), Pos := as.integer(paste0(strsplit(aa_subs,"")[[1]][1:(nchar(aa_subs)-1)], collapse = "")), aa_subs]
+
   if (color_type == "") {
       vd[, color_type := factor("all vars")]
   } else if (color_type == "Nmut") {
       vd[grepl("[0-9]", aa_subs), color_type := factor(length(grep("_", aa_subs)) + 1), aa_subs]
   } else if (exists("structural_properties") == TRUE) {
-      vd[!grepl("_", aa_subs) & grepl("[0-9]", aa_subs), Pos := as.integer(paste0(strsplit(aa_subs,"")[[1]][1:(nchar(aa_subs)-1)], collapse = "")), aa_subs]
 
       if (length(structural_properties[, unique(unlist(.SD)), .SDcols = color_type]) < 10) { #assume it's a factor
           vd <- merge(vd,
@@ -417,10 +420,10 @@ dg_basic_analyses <- function(
   # plot
   if (parlist[["no_folded_states"]] == 1) {
       # plot folding and binding
-      p <- gridExtra::grid.arrange(df_dist, df_ffitness, df_bfitness,
-                                   df_db, db_dist, db_bfitness,
-          nrow = 2)
-      ggplot2::ggsave(p,
+      # p <-
+      ggplot2::ggsave(gridExtra::grid.arrange(df_dist, df_ffitness, df_bfitness,
+                        df_db, db_dist, db_bfitness,
+                        nrow = 2),
           file = file.path(dataset_folder, model_name,
               paste0("results/dG_fitness_f",
                 datasets_ab[1], "b", datasets_ab[2], "_", color_type,
@@ -429,10 +432,10 @@ dg_basic_analyses <- function(
           height = 7)
   } else if (parlist[["no_folded_states"]] == 2) {
       # plot folding
-      p <- gridExtra::grid.arrange(dfA_dist, dfA_ffitness, dfB_ffitness,
-                                   dfA_dfB, dfB_dist,
-          nrow = 2)
-      ggplot2::ggsave(p,
+      # p <-
+      ggplot2::ggsave(gridExtra::grid.arrange(dfA_dist, dfA_ffitness, dfB_ffitness,
+                        dfA_dfB, dfB_dist,
+                        nrow = 2),
           file = file.path(dataset_folder, model_name,
               paste0("results/dG_folding_fitness_fA",
                 datasets_ab[1], "_fB", datasets_ab[2], "_", color_type,
@@ -441,10 +444,10 @@ dg_basic_analyses <- function(
           height = 7)
 
       # plot binding
-      p <- gridExtra::grid.arrange(db_dist, dfA_db, dfB_db,
-                                   dfA_bfitness, dfB_bfitness, db_bfitness,
-          nrow = 2)
-      ggplot2::ggsave(p,
+      # p <-
+      ggplot2::ggsave(gridExtra::grid.arrange(db_dist, dfA_db, dfB_db,
+                        dfA_bfitness, dfB_bfitness, db_bfitness,
+                        nrow = 2),
           file = file.path(dataset_folder, model_name,
               paste0("results/dG_binding_fitness_b",
                 datasets_ab[1], "_fA", datasets_ab[1], "_fB", datasets_ab[2],
@@ -461,6 +464,11 @@ dg_basic_analyses <- function(
   ##############################################################################
 
   if (stage == "bootstrap") {
+
+    # select variants that match a color_type and have at least one measured folding and binding value each
+    vd_plot <- vd[!is.na(color_type), x := rowSums(!is.na(.SD)) > 0, .SDcols = grep("f[0-9]*_fitness", names(vd))][
+      x == TRUE, y := rowSums(!is.na(.SD)) > 0, .SDcols = grep("b[0-9]*_fitness", names(vd))][y == TRUE]
+
     # evaluate if parameter estimates are significantly different from zero
     if (parlist[["no_folded_states"]] == 1){
       vd_plot[, f_ddg_fdr := stats::p.adjust(2*stats::pnorm(-abs(f_ddg / f_ddg_sd)),
@@ -531,9 +539,10 @@ dg_basic_analyses <- function(
       } else {
           df_db_sig <- df_db_sig + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
       }
-      p <- gridExtra::grid.arrange(df_db_dfsig, df_db_dbsig, df_db_sig,
-          nrow = 3, ncol = 1)
-      ggplot2::ggsave(p,
+      # p <-
+      ggplot2::ggsave(gridExtra::grid.arrange(df_db_dfsig, df_db_dbsig, df_db_sig,
+                        nrow = 3,
+                        ncol = 1),
           file = file.path(dataset_folder, model_name,
               paste0("results/bootstrap_dG_uncertainty_", color_type, ".pdf")),
           width = 4.5,
@@ -717,12 +726,13 @@ dg_basic_analyses <- function(
       } else {
           dfB_db_sig <- dfB_db_sig + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
       }
-      p <- gridExtra::grid.arrange(
-        dfA_dfB_dfAsig, dfA_db_dfsig, dfB_db_dfsig,
-        dfA_dfB_dfBsig, dfA_db_dbsig, dfB_db_dbsig,
-        dfA_dfB_sig, dfA_db_sig, dfB_db_sig,
-          nrow = 3, ncol = 3)
-      ggplot2::ggsave(p,
+      # p <-
+      ggplot2::ggsave(gridExtra::grid.arrange(
+                          dfA_dfB_dfAsig, dfA_db_dfsig, dfB_db_dfsig,
+                          dfA_dfB_dfBsig, dfA_db_dbsig, dfB_db_dbsig,
+                          dfA_dfB_sig, dfA_db_sig, dfB_db_sig,
+                        nrow = 3,
+                        ncol = 3),
           file = file.path(dataset_folder, model_name,
               paste0("results/bootstrap_dG_uncertainty_", color_type, ".pdf")),
           width = 3*4.5,
@@ -868,14 +878,60 @@ dg_basic_analyses <- function(
 
   # plot all comparisions
   if (varlist[["no_abd_datasets"]] > 1 & varlist[["no_bind_datasets"]] > 1) {
-      p <- gridExtra::grid.arrange(grobs = plot_list,
-          nrow = ceiling(sqrt(length(plot_list))),
-          ncol = ceiling(sqrt(length(plot_list))))
-      ggplot2::ggsave(p,
+      # p <-
+      ggplot2::ggsave(gridExtra::grid.arrange(grobs = plot_list,
+                        nrow = ceiling(sqrt(length(plot_list))),
+                        ncol = ceiling(sqrt(length(plot_list)))),
           file = file.path(dataset_folder, model_name,
             paste0("results/fitness_scatter_dg_relationship_all_", color_type,
                 ifelse(stage == "bootstrap", "_boot",""), ".pdf")),
           width = 4 * ceiling(sqrt(length(plot_list))),
           height = 3.5 * ceiling(sqrt(length(plot_list))))
+  }
+
+
+
+  ##################################################################
+  ## plot relationship between dG and distance to ligand and RSA ###
+  ##################################################################
+  if (file.exists(file.path(dataset_folder, "data/structural_properties.txt"))) {
+
+    # select variants that match a color_type and have at least one measured folding and binding value each
+    vd_plot <- vd[!is.na(color_type), x := rowSums(!is.na(.SD)) > 0, .SDcols = grep("f[0-9]*_fitness", names(vd))][
+      x == TRUE, y := rowSums(!is.na(.SD)) > 0, .SDcols = grep("b[0-9]*_fitness", names(vd))][y == TRUE]
+
+    vd_plot <- merge(vd_plot,
+        structural_properties,
+        by = "Pos")
+
+    vd_plot_melt1 <- reshape2::melt(vd_plot,
+      id.vars = c("color_type", grep("^[bf][AB]?_ddg$", names(vd_plot), value = T)),
+      measure.vars = c("HAmin_ligand", "RSA_unbound"))
+    names(vd_plot_melt1)[names(vd_plot_melt1) == "variable"] <- "structural_property"
+    names(vd_plot_melt1)[names(vd_plot_melt1) == "value"] <- "structural_property_value"
+
+    vd_plot_melt2 <- reshape2::melt(vd_plot_melt1,
+      id.vars = c("color_type", grep("structural", names(vd_plot_melt1), value = T)),
+      measure.vars = grep("ddg", names(vd_plot_melt1), value = T))
+
+    p <- ggplot2::ggplot(vd_plot_melt2,
+        ggplot2::aes(structural_property_value, value)) +
+      ggplot2::geom_point(ggplot2::aes(color = color_type)) +
+      ggplot2::geom_smooth(span = 0.5, color = "black") +
+      ggplot2::geom_hline(yintercept = 0, linetype = 3) +
+      ggplot2::facet_grid(variable ~ structural_property, scales = "free") +
+      ggplot2::labs(y = "ddG values", color = color_type)
+    if (is.factor(vd_plot$color_type)) {
+        p <- p + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        p <- p + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
+
+    ggplot2::ggsave(p,
+      file = file.path(dataset_folder, model_name,
+          paste0("results/dG_structural_properties_", color_type,
+                  ifelse(stage == "bootstrap", "_boot",""), ".pdf")),
+      width = 8,
+      height = (parlist[["no_folded_states"]] + 1) * 3.5)
   }
 }
