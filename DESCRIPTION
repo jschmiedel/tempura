@@ -1,7 +1,7 @@
 Package: tempura
 Title: Fit free energies of folding and binding from doubledeepPCA data
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R:
     person(given = "Joern",
            family = "Schmiedel",
            role = c("aut", "cre"),
@@ -12,7 +12,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
-Imports: 
+Imports:
     data.table,
     base,
     Matrix,

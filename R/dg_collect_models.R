@@ -172,8 +172,8 @@ dg_collect_models <- function(
         }
         # p <-
         ggplot2::ggsave(gridExtra::grid.arrange(grobs = plot_list,
-              nrow = ceiling(sqrt(length(plot_list))),
-              ncol = ceiling(sqrt(length(plot_list)))),
+                          nrow = ceiling(sqrt(length(plot_list))),
+                          ncol = ceiling(sqrt(length(plot_list)))),
             file = file.path(dataset_folder, model_name, "results/prediction_performance_fitness.pdf"),
             width = 6 * ceiling(sqrt(length(plot_list))),
             height = 5 * ceiling(sqrt(length(plot_list))))

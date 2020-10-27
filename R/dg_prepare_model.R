@@ -4,6 +4,7 @@
 #' @param dataset_folder absolute path to the dataset folder, is created if non-existent
 #' @param model_name name of the model that should be computed on the dataset
 #' @param no_folded_states integer, '1': one folded, binding-competent state, '2': binding-incompetent and binding-competent folded states, default = 1
+#' @param fix_dgwt logical, if TRUE, only one folded and one bound dgwt value exists across datasets and assays, if FALSE (default) each dataset and assay has their independent dgwt values for folding and binding
 #' @param dg_extremes float, lower and upper bounds for dG parameters, default = 15
 #' @param fixed_par list of parameters that are being fixed at their starting values for model fitting
 #' @param lambda regularization parameter
@@ -15,6 +16,7 @@ dg_prepare_model <- function(
 	dataset_folder,
 	model_name,
 	no_folded_states = 1,
+  fix_dgwt = FALSE,
 	dg_extremes = 15,
 	fixed_par = c(),
   lambda = 0.1
@@ -33,30 +35,51 @@ dg_prepare_model <- function(
 	## define parameter names for dG modeling
 	if (no_folded_states == 1) {
 		f_mut_ddg <- paste0(varlist[["mut_list"]][, mutation], "_f_ddg")
-		f_global <- c(paste0("f", 1:varlist[["no_abd_datasets"]], "_dgwt"),
-				paste0("f", 1:varlist[["no_abd_datasets"]], "_fitwt"),
-				paste0("f", 1:varlist[["no_abd_datasets"]], "_fit0"))
-		b_global <- c(paste0("b", 1:varlist[["no_bind_datasets"]], "_dgwt"),
-				paste0("bf", 1:varlist[["no_bind_datasets"]], "_dgwt"),
-				paste0("b", 1:varlist[["no_bind_datasets"]], "_fitwt"),
-				paste0("b", 1:varlist[["no_bind_datasets"]], "_fit0"))
+
+    if (fix_dgwt == FALSE) {
+      f_global <- c(paste0("f", 1:varlist[["no_abd_datasets"]], "_dgwt"),
+          paste0("f", 1:varlist[["no_abd_datasets"]], "_fitwt"),
+          paste0("f", 1:varlist[["no_abd_datasets"]], "_fit0"))
+      b_global <- c(paste0("b", 1:varlist[["no_bind_datasets"]], "_dgwt"),
+          paste0("bf", 1:varlist[["no_bind_datasets"]], "_dgwt"),
+          paste0("b", 1:varlist[["no_bind_datasets"]], "_fitwt"),
+          paste0("b", 1:varlist[["no_bind_datasets"]], "_fit0"))
+    } else {
+      f_global <- c("f_dgwt",
+          paste0("f", 1:varlist[["no_abd_datasets"]], "_fitwt"),
+          paste0("f", 1:varlist[["no_abd_datasets"]], "_fit0"))
+      b_global <- c("b_dgwt",
+          paste0("b", 1:varlist[["no_bind_datasets"]], "_fitwt"),
+          paste0("b", 1:varlist[["no_bind_datasets"]], "_fit0"))
+    }
+
 	} else { #label two folded states as A and B, where B is the binding-competent state
 		f_mut_ddg <- c(paste0(varlist[["mut_list"]][, mutation], "_fA_ddg"),
 				paste0(varlist[["mut_list"]][, mutation], "_fB_ddg"))
-		f_global <- c(paste0("fA", 1:varlist[["no_abd_datasets"]], "_dgwt"),
-				paste0("fB", 1:varlist[["no_abd_datasets"]], "_dgwt"),
-				paste0("f", 1:varlist[["no_abd_datasets"]], "_fitwt"),
-				paste0("f", 1:varlist[["no_abd_datasets"]], "_fit0"))
-		b_global <- c(paste0("b", 1:varlist[["no_bind_datasets"]], "_dgwt"),
-				paste0("bfA", 1:varlist[["no_bind_datasets"]], "_dgwt"),
-				paste0("bfB", 1:varlist[["no_bind_datasets"]], "_dgwt"),
-				paste0("b", 1:varlist[["no_bind_datasets"]], "_fitwt"),
-				paste0("b", 1:varlist[["no_bind_datasets"]], "_fit0"))
+
+    if (fix_dgwt == FALSE) {
+  		f_global <- c(paste0("fA", 1:varlist[["no_abd_datasets"]], "_dgwt"),
+  				paste0("fB", 1:varlist[["no_abd_datasets"]], "_dgwt"),
+  				paste0("f", 1:varlist[["no_abd_datasets"]], "_fitwt"),
+  				paste0("f", 1:varlist[["no_abd_datasets"]], "_fit0"))
+  		b_global <- c(paste0("b", 1:varlist[["no_bind_datasets"]], "_dgwt"),
+  				paste0("bfA", 1:varlist[["no_bind_datasets"]], "_dgwt"),
+  				paste0("bfB", 1:varlist[["no_bind_datasets"]], "_dgwt"),
+  				paste0("b", 1:varlist[["no_bind_datasets"]], "_fitwt"),
+  				paste0("b", 1:varlist[["no_bind_datasets"]], "_fit0"))
+    } else {
+      f_global <- c("fA_dgwt",
+          "fB_dgwt",
+          paste0("f", 1:varlist[["no_abd_datasets"]], "_fitwt"),
+          paste0("f", 1:varlist[["no_abd_datasets"]], "_fit0"))
+      b_global <- c("b_dgwt",
+          paste0("b", 1:varlist[["no_bind_datasets"]], "_fitwt"),
+          paste0("b", 1:varlist[["no_bind_datasets"]], "_fit0"))
+    }
 	}
 	b_mut_ddg <- paste0(varlist[["mut_list"]][, mutation], "_b_ddg")
 
 	dt_par <- data.table(parameter = c(f_mut_ddg, b_mut_ddg, f_global, b_global))
-
 
     ## bounds for solver
     dt_par[, lower_bound := -dg_extremes]
@@ -78,6 +101,7 @@ dg_prepare_model <- function(
     ## mean and sd to draw starting parameters values for solver
     dt_par[, start_par_mean := 0]
     dt_par[, start_par_sd := 0] #all ddg values are not sampled
+
     # dgwt values are drawn from N(0, 1)
     dt_par[grep("dgwt", parameter), ':=' (start_par_mean = 0, start_par_sd = 1)]
 
@@ -111,7 +135,8 @@ dg_prepare_model <- function(
     parlist <- list(dt_par = dt_par,
 				no_folded_states = no_folded_states,
 				fixed_par = fixed_par,
-                lambda = lambda)
+        lambda = lambda,
+        fix_dgwt = fix_dgwt)
 
 	## save varlist to .RData file
 	save(parlist, file = file.path(dataset_folder, model_name, "parameter_list.RData"))
