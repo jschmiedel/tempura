@@ -17,7 +17,7 @@ dg_prepare_model <- function(
 	no_folded_states = 1,
 	dg_extremes = 15,
 	fixed_par = c(),
-    lambda = 0.1
+  lambda = 0.1
 ) {
 
     varlist <- mutation <- lower_bound <- upper_bound <- parameter <- start_par_mean <- start_par_sd <- NULL

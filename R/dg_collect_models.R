@@ -73,6 +73,7 @@ dg_collect_models <- function(
             height = 15)
 
 
+
         ## extract best model per train/test set
         setorder(dt_models, objective)
         best_models <- dt_models[, .SD[1, ], test_set]
@@ -169,10 +170,10 @@ dg_collect_models <- function(
                     title = paste0("binding dataset ", ds),
                     color = "train/test set")
         }
-        p <- gridExtra::grid.arrange(grobs = plot_list,
-            nrow = ceiling(sqrt(length(plot_list))),
-            ncol = ceiling(sqrt(length(plot_list))))
-        ggplot2::ggsave(p,
+        # p <-
+        ggplot2::ggsave(gridExtra::grid.arrange(grobs = plot_list,
+              nrow = ceiling(sqrt(length(plot_list))),
+              ncol = ceiling(sqrt(length(plot_list)))),
             file = file.path(dataset_folder, model_name, "results/prediction_performance_fitness.pdf"),
             width = 6 * ceiling(sqrt(length(plot_list))),
             height = 5 * ceiling(sqrt(length(plot_list))))
@@ -342,11 +343,11 @@ dg_collect_models <- function(
             ggplot2::geom_abline(linetype = 3, color = "red", slope = c(-1, 1)) +
             ggplot2::labs(x = "diff (initial - bootstrapped) estimate", y = "bootstrapped sd")
 
-        p <- gridExtra::grid.arrange(grobs = list(p1, p2, p3),
-            nrow = 3,
-            ncol = 1)
+        # p <-
 
-        ggplot2::ggsave(p,
+        ggplot2::ggsave(gridExtra::grid.arrange(grobs = list(p1, p2, p3),
+                  nrow = 3,
+                  ncol = 1),
                 file = file.path(dataset_folder, model_name, "results/bootstrap_ddg_pars.pdf"),
                 width = 4 * ddg[, length(unique(type))] ,
                 height = 12)
@@ -421,10 +422,10 @@ dg_collect_models <- function(
                 x = "initial estimate",
                 y = "bootstrapped estimate (+-sd)")
 
-        p <- gridExtra::grid.arrange(grobs = list(p1, p2, p3),
-            nrow = 1,
-            ncol = 3)
-        ggplot2::ggsave(p,
+        # p <-
+        ggplot2::ggsave(gridExtra::grid.arrange(grobs = list(p1, p2, p3),
+                  nrow = 1,
+                  ncol = 3),
                 file = file.path(dataset_folder, model_name, "results/bootstrap_global_pars.pdf"),
                 width = 13,
                 height = 4)

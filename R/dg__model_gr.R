@@ -57,8 +57,7 @@ dg__model_gr <- function(
             w = varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("f", i, "_sigma")],
             mutxvar = varlist[["mutxvar"]],
             fitness_scale = varlist[["fitness_scale"]],
-            no_folded_states = parlist[["no_folded_states"]],
-            lambda = parlist[["lambda"]]
+            no_folded_states = parlist[["no_folded_states"]]
         )
     }
 

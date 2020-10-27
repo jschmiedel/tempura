@@ -27,7 +27,7 @@ dg__model_fn <- function(
   	## precalc ddG vectors and regularization penality on ddG parameters
   	if (parlist[["no_folded_states"]] == 1) {
       f_ddg_var <- list(varlist[["varxmut"]] %*% par[grep("f_ddg", names(par))])
-      msd <- msd + parlist[["lambda"]] * sum(par[grep("f_ddg", names(par))]^2)
+      msd <- msd
   	} else {
   		fA_ddg <- par[grep("fA_ddg", names(par))]
       fB_ddg <- par[grep("fB_ddg", names(par))]
@@ -35,10 +35,10 @@ dg__model_fn <- function(
         varlist[["varxmut"]] %*% fA_ddg,
         varlist[["varxmut"]] %*% fB_ddg
       )
-      msd <- msd + parlist[["lambda"]] * sum(((fA_ddg + fB_ddg)/2)^2 + ((fA_ddg - fB_ddg)/sqrt(2))^2) #minimize average f[AB]_ddg and their difference
+      msd <- msd
   	}
   	b_ddg_var <- varlist[["varxmut"]] %*% par[grep("b_ddg", names(par))]
-    msd <- msd + parlist[["lambda"]] * sum(par[grep("b_ddg", names(par))]^2)
+    msd <- msd + parlist[["lambda"]] * sum(abs(par[grep("b_ddg", names(par))]))
 
 
     ## extract global pars to speed up lookups

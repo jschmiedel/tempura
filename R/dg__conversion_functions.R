@@ -57,7 +57,6 @@ convert_dg2foldinggradient <- function(
   mutxvar,
   fitness_scale,
   no_folded_states,
-  lambda,
   par
 ) {
   if (fitness_scale == "lin" & no_folded_states == 1) {
@@ -69,8 +68,7 @@ convert_dg2foldinggradient <- function(
       f_fit0 = f_fit0,
       fitness = fitness,
       w = w,
-      mutxvar = mutxvar,
-      lambda = lambda
+      mutxvar = mutxvar
     )
   } else if (fitness_scale == "log" & no_folded_states == 1) {
     gradient_f <- function_folding_dg2logf_gradient( ##
@@ -81,8 +79,7 @@ convert_dg2foldinggradient <- function(
       f_fit0 = f_fit0,
       fitness = fitness,
       w = w,
-      mutxvar = mutxvar,
-      lambda = lambda
+      mutxvar = mutxvar
     )
   } else if (fitness_scale == "lin" & no_folded_states == 2) {
     gradient_f <- function_folding_dg2fitness_4state_gradient( ##
@@ -96,8 +93,7 @@ convert_dg2foldinggradient <- function(
       f_fit0 = f_fit0,
       fitness = fitness,
       w = w,
-      mutxvar = mutxvar,
-      lambda = lambda
+      mutxvar = mutxvar
     )
   } else if (fitness_scale == "log" & no_folded_states == 2) {
     gradient_f <- function_folding_dg2logf_4state_gradient( ##
@@ -111,8 +107,7 @@ convert_dg2foldinggradient <- function(
       f_fit0 = f_fit0,
       fitness = fitness,
       w = w,
-      mutxvar = mutxvar,
-      lambda = lambda
+      mutxvar = mutxvar
     )
   }
   return(gradient_f)
@@ -283,7 +278,6 @@ function_folding_dg2fitness_gradient <- function(
   fitness,
   w,
   mutxvar,
-  lambda,
   par,
   rt = 1.99e-3 * 310.15
 ) {
@@ -305,8 +299,7 @@ function_folding_dg2fitness_gradient <- function(
   )
   derr_dfitness <- -2 * (fitness - fitness_pred) / w^2
   derr_dfitness[is.na(derr_dfitness)] <- 0
-  gradient_f_ddg <- mutxvar %*% (derr_dfitness * dfitness_df_ddg) +
-                    2 * f_ddg * lambda #regularization term
+  gradient_f_ddg <- mutxvar %*% (derr_dfitness * dfitness_df_ddg)
   gradient_f_dgwt <- sum(derr_dfitness * dfitness_df_dgwt, na.rm = T)
   gradient_f_fitwt <- sum(derr_dfitness * dfitness_df_fitwt, na.rm = T)
   gradient_f_fit0 <- sum(derr_dfitness * dfitness_df_fit0, na.rm = T)
@@ -384,10 +377,9 @@ function_binding_dg2fitness_gradient <- function(
   )
   derr_dfitness <- -2 * (fitness - fitness_pred) / w^2
   derr_dfitness[is.na(derr_dfitness)] <- 0
-  gradient_f_ddg <- mutxvar %*% (derr_dfitness * dfitness_df_ddg) +
-                    2 * f_ddg * lambda # regularization term
+  gradient_f_ddg <- mutxvar %*% (derr_dfitness * dfitness_df_ddg)
   gradient_b_ddg <- mutxvar %*% (derr_dfitness * dfitness_db_ddg) +
-                    2 * b_ddg * lambda  # regularization term
+                    sign(b_ddg) * lambda  # regularization term
   gradient_f_dgwt <- sum(derr_dfitness * dfitness_df_dgwt, na.rm = T)
   gradient_b_dgwt <- sum(derr_dfitness * dfitness_db_dgwt, na.rm = T)
   gradient_b_fitwt <- sum(derr_dfitness * dfitness_db_fitwt, na.rm = T)
@@ -433,7 +425,6 @@ function_folding_dg2fitness_4state_gradient <- function(
   fitness,
   w,
   mutxvar,
-  lambda,
   rt = 1.99e-3 * 310.15
 ) {
   cf <- (f_fitwt - f_fit0) / rt
@@ -478,10 +469,8 @@ function_folding_dg2fitness_4state_gradient <- function(
   derr_dfitness <- -2 * (fitness - fitness_pred) / w^2
   derr_dfitness[is.na(derr_dfitness)] <- 0
 
-  gradient_fA_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfA_ddg)+
-                      ((1 + sqrt(2)) * fA_ddg - (1 - sqrt(2)) * fB_ddg) * lambda   #regularization term
-  gradient_fB_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfB_ddg) +
-                      ((1 + sqrt(2)) * fB_ddg - (1 - sqrt(2)) * fA_ddg) * lambda  #regularization term
+  gradient_fA_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfA_ddg)
+  gradient_fB_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfB_ddg)
   gradient_fA_dgwt <- sum(derr_dfitness * dfitness_dfA_dgwt, na.rm = T)
   gradient_fB_dgwt <- sum(derr_dfitness * dfitness_dfB_dgwt, na.rm = T)
   gradient_f_fitwt <- sum(derr_dfitness * dfitness_df_fitwt, na.rm = T)
@@ -588,11 +577,9 @@ function_binding_dg2fitness_4state_gradient <- function(
   derr_dfitness <- -2 * (fitness - fitness_pred) / w^2
   derr_dfitness[is.na(derr_dfitness)] <- 0
   gradient_b_ddg <- mutxvar %*% (derr_dfitness * dfitness_db_ddg) +
-                    2 * b_ddg * lambda  #regularization term
-  gradient_fA_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfA_ddg) +
-                    ((1 + sqrt(2)) * fA_ddg - (1 - sqrt(2)) * fB_ddg) * lambda  #regularization term
-  gradient_fB_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfB_ddg) +
-                    ((1 + sqrt(2)) * fB_ddg - (1 - sqrt(2)) * fA_ddg) * lambda  #regularization term
+                    sign(b_ddg) * lambda  #regularization term
+  gradient_fA_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfA_ddg)
+  gradient_fB_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfB_ddg)
 
   gradient_b_dgwt <- sum(derr_dfitness * dfitness_db_dgwt, na.rm = T)
   gradient_fA_dgwt <- sum(derr_dfitness * dfitness_dfA_dgwt, na.rm = T)
@@ -646,7 +633,6 @@ function_folding_dg2logf_gradient <- function(
   fitness,
   w,
   mutxvar,
-  lambda,
   rt = 1.99e-3 * 310.15
 ) {
   cf <- (exp(f_fitwt) - exp(f_fit0)) / rt
@@ -673,8 +659,7 @@ function_folding_dg2logf_gradient <- function(
   derr_dfitness <- -2 * (fitness - fitness_pred) / w^2 / f_pred_nolog
 
   derr_dfitness[is.na(derr_dfitness)] <- 0
-  gradient_f_ddg <- mutxvar %*% (derr_dfitness * dfitness_df_ddg) +
-                    2 * f_ddg * lambda  #regularization term
+  gradient_f_ddg <- mutxvar %*% (derr_dfitness * dfitness_df_ddg)
   gradient_f_dgwt <- sum(derr_dfitness * dfitness_df_dgwt, na.rm = T)
   gradient_f_fitwt <- sum(derr_dfitness * dfitness_df_fitwt, na.rm = T)
   gradient_f_fit0 <- sum(derr_dfitness * dfitness_df_fit0, na.rm = T)
@@ -758,10 +743,9 @@ function_binding_dg2logf_gradient <- function(
   derr_dfitness <- -2 * (fitness - fitness_pred) / w^2 / f_pred_nolog
 
   derr_dfitness[is.na(derr_dfitness)] <- 0
-  gradient_f_ddg <- mutxvar %*% (derr_dfitness * dfitness_df_ddg) +
-                    2 * f_ddg * lambda  # regularization term
+  gradient_f_ddg <- mutxvar %*% (derr_dfitness * dfitness_df_ddg)
   gradient_b_ddg <- mutxvar %*% (derr_dfitness * dfitness_db_ddg) +
-                    2 * b_ddg * lambda  # regularization term
+                    sign(b_ddg) * lambda  # regularization term
   gradient_f_dgwt <- sum(derr_dfitness * dfitness_df_dgwt, na.rm = T)
   gradient_b_dgwt <- sum(derr_dfitness * dfitness_db_dgwt, na.rm = T)
   gradient_b_fitwt <- sum(derr_dfitness * dfitness_db_fitwt, na.rm = T)
@@ -807,7 +791,6 @@ function_folding_dg2logf_4state_gradient <- function(
   fitness,
   w,
   mutxvar,
-  lambda,
   rt = 1.99e-3 * 310.15
 ) {
   cf <- (exp(f_fitwt) - exp(f_fit0)) / rt
@@ -856,10 +839,8 @@ function_folding_dg2logf_4state_gradient <- function(
   derr_dfitness <- -2 * (fitness - fitness_pred) / w^2 / f_pred_nolog
   derr_dfitness[is.na(derr_dfitness)] <- 0
 
-  gradient_fA_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfA_ddg) +
-                    ((1 + sqrt(2)) * fA_ddg - (1 - sqrt(2)) * fB_ddg) * lambda  #regularization term
-  gradient_fB_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfB_ddg) +
-                    ((1 + sqrt(2)) * fB_ddg - (1 - sqrt(2)) * fA_ddg) * lambda  #regularization term
+  gradient_fA_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfA_ddg)
+  gradient_fB_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfB_ddg)
   gradient_fA_dgwt <- sum(derr_dfitness * dfitness_dfA_dgwt, na.rm = T)
   gradient_fB_dgwt <- sum(derr_dfitness * dfitness_dfB_dgwt, na.rm = T)
   gradient_f_fitwt <- sum(derr_dfitness * dfitness_df_fitwt, na.rm = T)
@@ -970,11 +951,9 @@ function_binding_dg2logf_4state_gradient <- function(
   derr_dfitness <- -2 * (fitness - fitness_pred) / w^2 / f_pred_nolog
   derr_dfitness[is.na(derr_dfitness)] <- 0
   gradient_b_ddg <- mutxvar %*% (derr_dfitness * dfitness_db_ddg) +
-                    2 * b_ddg * lambda  #regularization term
-  gradient_fA_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfA_ddg) +
-                    ((1 + sqrt(2)) * fA_ddg - (1 - sqrt(2)) * fB_ddg) * lambda  #regularization term
-  gradient_fB_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfB_ddg) +
-                    ((1 + sqrt(2)) * fB_ddg - (1 - sqrt(2)) * fA_ddg) * lambda  #regularization term
+                    sign(b_ddg) * lambda  #regularization term
+  gradient_fA_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfA_ddg)
+  gradient_fB_ddg <- mutxvar %*% (derr_dfitness * dfitness_dfB_ddg)
 
   gradient_b_dgwt <- sum(derr_dfitness * dfitness_db_dgwt, na.rm = T)
   gradient_fA_dgwt <- sum(derr_dfitness * dfitness_dfA_dgwt, na.rm = T)
