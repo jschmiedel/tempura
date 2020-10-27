@@ -6,7 +6,7 @@ require(devtools)
 load_all()
 
 dataset_folder = "../doubledeepPCA/dg_models/SH3"
-model_name = "three_state"
+model_name = "three_state_test"
 model_name = "four_state"
 
 dataset_folder = "/nfs/users/blehner/jschmiedel/doubledeepPCA/dg_models/SH3_regtest"
@@ -22,7 +22,15 @@ dg_prepare_datasets(dataset_folder = dataset_folder,
 dg_prepare_model(
 	dataset_folder = dataset_folder,
 	model_name = model_name,
-    lambda = 0.1
+    lambda = 0.1,
+    fix_dgwt = TRUE
+)
+
+dg_estimate_parallel(
+    dataset_folder = dataset_folder,
+    model_name = model_name,
+    iterations = 1:20,
+    Ncores = 8
 )
 
 for (it in seq(1,5)) {
