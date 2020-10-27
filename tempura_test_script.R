@@ -7,10 +7,6 @@ load_all()
 
 dataset_folder = "../doubledeepPCA/dg_models/SH3"
 model_name = "three_state_test"
-model_name = "four_state"
-
-dataset_folder = "/nfs/users/blehner/jschmiedel/doubledeepPCA/dg_models/SH3_regtest"
-model_name = "three_lm1"
 
 dg_prepare_datasets(dataset_folder = dataset_folder,
 	abundancepca_files = c(paste0(dataset_folder, "/data/01a-GRB2_epPCR_stabilityPCA_aa012_thresholded.RData"),
@@ -20,20 +16,12 @@ dg_prepare_datasets(dataset_folder = dataset_folder,
 )
 
 dg_prepare_model(
-	dataset_folder = dataset_folder,
-	model_name = model_name,
-    lambda = 0.1,
-    fix_dgwt = TRUE
-)
-
-dg_estimate_parallel(
     dataset_folder = dataset_folder,
     model_name = model_name,
-    iterations = 1:20,
-    Ncores = 8
+    lambda = 0.1
 )
 
-for (it in seq(1,5)) {
+for (it in seq(1,10)) {
     print (it)
     dg_estimate(
         dataset_folder = dataset_folder,
@@ -47,7 +35,8 @@ for (it in seq(1,5)) {
 
 dg_collect_models(
     dataset_folder = dataset_folder,
-    model_name = model_name
+    model_name = model_name,
+    which_test_set = 0
 )
 
 

@@ -73,6 +73,7 @@ dg_collect_models <- function(
             height = 15)
 
 
+
         ## extract best model per train/test set
         setorder(dt_models, objective)
         best_models <- dt_models[, .SD[1, ], test_set]
