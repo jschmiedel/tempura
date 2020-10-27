@@ -20,9 +20,9 @@ dg_estimate <- function(
 	model_name,
 	which_test_set = 0,
 	iteration = 1,
-  return_model = FALSE,
-  maxit = 1e4,
-  trace_optim = FALSE
+    return_model = FALSE,
+    maxit = 1e4,
+    trace_optim = FALSE
 ) {
 
     test_set <- parlist <- start_par_mean <- start_par_sd <- parameter <- lower_bound <- upper_bound <- NULL

@@ -139,8 +139,8 @@ dg__model_gr <- function(
           }
           names_f_dgwt <- c(paste0("f", f_idx, "_dgwt"), paste0("bf", b_idx, "_dgwt"))
         } else {
-          gr_f_dgwt <- sum(sapply(f_idx, FUN = function(f_idx) {as.numeric(gradient_f[[f_idx]]["f_dgwt"])})) +
-            sum(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["f_dgwt"])}))
+          gr_f_dgwt <- rowSums(sapply(f_idx, FUN = function(f_idx) {as.numeric(gradient_f[[f_idx]]["f_dgwt"])})) +
+            rowSums(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["f_dgwt"])}))
           names_f_dgwt <- paste0("f_dgwt")
         }
 
@@ -170,10 +170,10 @@ dg__model_gr <- function(
           names_f_dgwt <- c(paste0("fA", f_idx, "_dgwt"), paste0("fB", f_idx, "_dgwt"),
                             paste0("bfA", b_idx, "_dgwt"), paste0("bfB", b_idx, "_dgwt"))
         } else {
-          gr_fA_dgwt <- sum(sapply(f_idx, FUN = function(f_idx) {as.numeric(gradient_f[[f_idx]]["fA_dgwt"])})) +
-            sum(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["fA_dgwt"])}))
-          gr_fB_dgwt <- sum(sapply(f_idx, FUN = function(f_idx) {as.numeric(gradient_f[[f_idx]]["fB_dgwt"])})) +
-            sum(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["fB_dgwt"])}))
+          gr_fA_dgwt <- rowSums(sapply(f_idx, FUN = function(f_idx) {as.numeric(gradient_f[[f_idx]]["fA_dgwt"])})) +
+            rowSums(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["fA_dgwt"])}))
+          gr_fB_dgwt <- rowSums(sapply(f_idx, FUN = function(f_idx) {as.numeric(gradient_f[[f_idx]]["fB_dgwt"])})) +
+            rowSums(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["fB_dgwt"])}))
           gr_f_dgwt <- c(gr_fA_dgwt, gr_fB_dgwt)
           names_f_dgwt <- c("fA_dgwt", "fB_dgwt")
         }
@@ -207,7 +207,7 @@ dg__model_gr <- function(
       }
       names_b_dgwt <- paste0("b", b_idx, "_dgwt")
     } else {
-      gr_b_dgwt <- sum(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["b_dgwt"])}))
+      gr_b_dgwt <- rowSums(sapply(b_idx, FUN = function(b_idx) {as.numeric(gradient_b[[b_idx]]["b_dgwt"])}))
       names_b_dgwt <- paste0("b_dgwt")
     }
 
