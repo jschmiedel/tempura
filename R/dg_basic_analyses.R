@@ -986,7 +986,7 @@ dg_basic_analyses <- function(
             alpha = ddg_weight)) +
           ggplot2::geom_smooth(ggplot2::aes(weight = ddg_weight), span = 0.5, color = "black")
     } else {
-      p <- ggplot2::ggplot(x,
+      p <- ggplot2::ggplot(vd_pos1,
         ggplot2::aes(structural_property_value, ddg)) +
         ggplot2::geom_pointrange(ggplot2::aes(
           color = color_type,
