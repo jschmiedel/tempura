@@ -8,7 +8,7 @@ dg_prepare_datasets(
   dataset_folder,
   abundancepca_files,
   bindingpca_files,
-  wt_seq,
+  wt_seq = "",
   train_test_split = c(10, 0.1),
   fitness_scale = "lin"
 )
@@ -16,11 +16,11 @@ dg_prepare_datasets(
 \arguments{
 \item{dataset_folder}{absolute path to the dataset folder, is created if non-existent}
 
-\item{abundancepca_files}{absolute path to the DiMSum-processed abundancePCA .RData files containing aa_seq, fitness and sigma cols; multiple files will be treated as independent measurements}
+\item{abundancepca_files}{absolute path to the DiMSum-processed abundancePCA .RData files containing aa_seq (or aa_subs), fitness and sigma cols; multiple files will be treated as independent measurements}
 
-\item{bindingpca_files}{absolute path to the DiMSum-processed bindingPCA .RData files containing aa_seq, fitness and sigma cols; multiple files will be used as independent measurements}
+\item{bindingpca_files}{absolute path to the DiMSum-processed bindingPCA .RData files containing aa_seq (or aa_subs), fitness and sigma cols; multiple files will be used as independent measurements}
 
-\item{wt_seq}{a character string of the wild-type/reference aa sequence}
+\item{wt_seq}{a character string of the wild-type/reference aa sequence used to extract aa_subs from aa_seq; if wt_seq is empty, assumes aa_subs column is present}
 
 \item{train_test_split}{c(A, B), Ax test split of variants, where each split has size B; default c(10, 0.1), i.e. 10x cross validation}
 
