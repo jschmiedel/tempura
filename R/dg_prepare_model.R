@@ -16,7 +16,7 @@ dg_prepare_model <- function(
 	dataset_folder,
 	model_name,
 	no_folded_states = 1,
-  fix_dgwt = FALSE,
+  fix_dgwt = TRUE,
 	dg_extremes = 15,
 	fixed_par = c(),
   lambda = 0.1
