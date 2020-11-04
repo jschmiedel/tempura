@@ -180,7 +180,7 @@ dg__fitness_from_model <- function(
         # compute Pearson's R between predictions and measurements
         if (calc_performance == TRUE) {
           prediction_performance[test_set == i,
-            paste0("f", ds) := variant_data[,
+            paste0("f", ds) := variant_data[as.numeric(f_ddg_var[[1]]) != 0,
                 stats::cor(.SD, use = "na.or.complete")[2,1],
                 .SDcols = grep(paste0("^f", ds, "_[pf]"), names(variant_data))]]
         }
@@ -357,8 +357,9 @@ dg__fitness_from_model <- function(
 
       # compute Pearson's R between predictions and measurements
       if (calc_performance == TRUE) {
+        #
         prediction_performance[test_set == i,
-            paste0("b", ds) := variant_data[,
+            paste0("b", ds) := variant_data[as.numeric(f_ddg_var[[1]]) != 0 & as.numeric(b_ddg_var) != 0,
                 stats::cor(.SD, use = "na.or.complete")[2,1],
                 .SDcols = grep(paste0("^b", ds, "_[pf]"), names(variant_data))]]
       }
