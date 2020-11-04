@@ -5,25 +5,23 @@ require(devtools)
 
 load_all()
 
-dataset_folder = "../doubledeepPCA/dg_models/SH3"
-model_name = "three_state_test"
-model_name = "four_state"
+dataset_folder = "../doubledeepPCA/dg_models/RBD"
+model_name = "three_state"
 
-dataset_folder = "/nfs/users/blehner/jschmiedel/doubledeepPCA/dg_models/SH3_regtest"
-model_name = "three_lm1"
 
+abd = grep("SortSeq", list.files(file.path(dataset_folder, "data")), value = T)
+bind = grep("TiteSeq", list.files(file.path(dataset_folder, "data")), value = T)
 dg_prepare_datasets(dataset_folder = dataset_folder,
-	abundancepca_files = c(paste0(dataset_folder, "/data/01a-GRB2_epPCR_stabilityPCA_aa012_thresholded.RData"),
-		paste0(dataset_folder, "/data/01c-GRB2_NM2_stabilityPCA_aa012_thresholded.RData")),
-	bindingpca_files = paste0(dataset_folder, "/data/01b-GRB2_epPCR_bindingPCA_aa012_thresholded.RData"),
-	wt_seq = "TYVQALFDFDPQEDGELGFRRGDFIHVMDNSDPNWWKGACHGQTGMFPRNYVTPVN*"
+    abundancepca_files = paste0(dataset_folder, "/data/", abd),
+    bindingpca_files = paste0(dataset_folder, "/data/", bind),
+    fitness_scale = "log"
 )
 
 dg_prepare_model(
 	dataset_folder = dataset_folder,
 	model_name = model_name,
-    lambda = 0.1,
-    fix_dgwt = TRUE
+    fix_f_dgwt = TRUE,
+    fix_b_dgwt = FALSE
 )
 
 dg_estimate_parallel(
@@ -49,6 +47,7 @@ dg_collect_models(
     dataset_folder = dataset_folder,
     model_name = model_name
 )
+
 
 
 for (it in seq(2,5)) {

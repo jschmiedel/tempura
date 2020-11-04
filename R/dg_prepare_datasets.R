@@ -31,6 +31,8 @@ dg_prepare_datasets = function(
 	all_files = list()
 	no_abd_datasets <- length(abundancepca_files)
 	no_bind_datasets <- length(bindingpca_files)
+  len_log10_abd <- ceiling(log10(no_abd_datasets + 1))
+  len_log10_bind <- ceiling(log10(no_bind_datasets + 1))
 
   if (wt_seq != "") {
     common_col = "aa_seq"
@@ -39,26 +41,71 @@ dg_prepare_datasets = function(
   }
 
 	# load abundancePCA files
+
 	for (i in seq_along(abundancepca_files)) {
 		load(abundancepca_files[i])
-		names(all_variants)[grep("^fitness$", names(all_variants))] <- paste0("f", i, "_fitness")
-		names(all_variants)[grep("^sigma$", names(all_variants))] <- paste0("f", i, "_sigma")
+		names(all_variants)[grep("^fitness$", names(all_variants))] <-
+      paste0("f",
+        stringr::str_pad(i,
+          width = len_log10_abd,
+          side = "left",
+          pad = "0"),
+        "_fitness")
+		names(all_variants)[grep("^sigma$", names(all_variants))] <-
+      paste0("f",
+        stringr::str_pad(i,
+          width = len_log10_abd,
+          side = "left",
+          pad = "0"),
+        "_sigma")
 		all_files[[i]] <- all_variants[, #only allow missense variants
 			.SD,
 			.SDcols = c(common_col,
-				paste0("f", i, "_fitness"),
-				paste0("f", i, "_sigma"))]
+				paste0("f",
+          stringr::str_pad(i,
+            width = len_log10_abd,
+            side = "left",
+            pad = "0"),
+          "_fitness"),
+				paste0("f",
+          stringr::str_pad(i,
+            width = len_log10_abd,
+            side = "left",
+            pad = "0"),
+          "_sigma"))]
 	}
 	# load bindingPCA files
 	for (i in seq_along(bindingpca_files)) {
 		load(bindingpca_files[i])
-		names(all_variants)[grep("^fitness$", names(all_variants))] <- paste0("b", i, "_fitness")
-		names(all_variants)[grep("^sigma$", names(all_variants))] <- paste0("b", i, "_sigma")
+		names(all_variants)[grep("^fitness$", names(all_variants))] <-
+      paste0("b",
+        stringr::str_pad(i,
+          width = len_log10_bind,
+          side = "left",
+          pad = "0"),
+        "_fitness")
+		names(all_variants)[grep("^sigma$", names(all_variants))] <-
+      paste0("b",
+        stringr::str_pad(i,
+          width = len_log10_bind,
+          side = "left",
+          pad = "0"),
+        "_sigma")
 		all_files[[i + no_abd_datasets]] <- all_variants[,  #only allow missense variants
 			.SD,
 			.SDcols = c(common_col,
-				paste0("b", i, "_fitness"),
-				paste0("b", i, "_sigma"))]
+				paste0("b",
+          stringr::str_pad(i,
+            width = len_log10_bind,
+            side = "left",
+            pad = "0"),
+          "_fitness"),
+				paste0("b",
+          stringr::str_pad(i,
+            width = len_log10_bind,
+            side = "left",
+            pad = "0"),
+          "_sigma"))]
 	}
 	# merge files
 	variant_data <- all_files[[1]]

@@ -8,7 +8,8 @@ dg_prepare_model(
   dataset_folder,
   model_name,
   no_folded_states = 1,
-  fix_dgwt = FALSE,
+  fix_f_dgwt = FALSE,
+  fix_b_dgwt = FALSE,
   dg_extremes = 15,
   fixed_par = c(),
   lambda = 0.1
@@ -21,7 +22,9 @@ dg_prepare_model(
 
 \item{no_folded_states}{integer, '1': one folded, binding-competent state, '2': binding-incompetent and binding-competent folded states, default = 1}
 
-\item{fix_dgwt}{logical, if TRUE, only one folded and one bound dgwt value exists across datasets and assays, if FALSE (default) each dataset and assay has their independent dgwt values for folding and binding}
+\item{fix_f_dgwt}{logical, if TRUE, only one folded dgwt value exists across datasets and assays, if FALSE (default) each dataset and assay has their independent dgwt values for folding}
+
+\item{fix_b_dgwt}{logical, if TRUE, only one binding dgwt value exists across binding datasets, if FALSE (default) each binding dataset has their independent dgwt values for binding}
 
 \item{dg_extremes}{float, lower and upper bounds for dG parameters, default = 15}
 

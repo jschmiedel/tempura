@@ -126,274 +126,281 @@ dg_basic_analyses <- function(
   ##############################################################################
 
   # plot f_ddg distribution and relationship with f_fitness, b_ddg and b_fitness
-  vd_plot <- vd[!is.na(get(paste0("f", datasets_ab[1], "_fitness"))) &
-                !is.na(get(paste0("b", datasets_ab[2], "_fitness"))) &
+  vd_plot <- vd[!is.na(get(paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_fitness"))) &
+                !is.na(get(paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_fitness"))) &
                 !is.na(color_type)]
 
   if (parlist[["no_folded_states"]] == 1) {
-    if (parlist[["fix_dgwt"]] == FALSE) {
-      f_dgwt_helper <- am[grep(paste0("^f", datasets_ab[1], "_dgwt"), parameter), value]
-      bf_dgwt_helper <- am[grep(paste0("^bf", datasets_ab[2], "_dgwt"), parameter), value]
-      b_dgwt_helper <- am[grep(paste0("^b", datasets_ab[2], "_dgwt"), parameter), value]
+    if (parlist[["fix_f_dgwt"]] == FALSE) {
+      f_dgwt_helper <- am[grep(paste0("^f", parlist[["str_abd"]][datasets_ab[1]], "_dgwt"), parameter), value]
+      bf_dgwt_helper <- am[grep(paste0("^bf", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value]
     } else {
       f_dgwt_helper <- bf_dgwt_helper <- am[grep("^f_dgwt", parameter), value]
+    }
+    if (parlist[["fix_b_dgwt"]] == FALSE) {
+      b_dgwt_helper <- am[grep(paste0("^b", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value]
+    } else {
       b_dgwt_helper <- am[grep("^b_dgwt", parameter), value]
     }
 
-      df_dist <- ggplot2::ggplot(data = vd_plot)
-      if (is.factor(vd_plot$color_type)) {
-          df_dist <- df_dist +
-              ggplot2::geom_density(ggplot2::aes(x = f_ddg + f_dgwt_helper,
-                                          color = color_type)) +
-              ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          df_dist <- df_dist +
-              ggplot2::geom_density(ggplot2::aes(x = f_ddg + f_dgwt_helper), color = 'black')
-      }
-     df_dist <- df_dist +
-          ggplot2::geom_vline(xintercept = f_dgwt_helper,linetype = 2) +
-          ggplot2::theme(legend.position = c(0.75, 0.75)) +
-          ggplot2::labs(x = "dG folding", color = "")
+    df_dist <- ggplot2::ggplot(data = vd_plot)
+    if (is.factor(vd_plot$color_type)) {
+        df_dist <- df_dist +
+            ggplot2::geom_density(ggplot2::aes(x = f_ddg + f_dgwt_helper,
+                                        color = color_type)) +
+            ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        df_dist <- df_dist +
+            ggplot2::geom_density(ggplot2::aes(x = f_ddg + f_dgwt_helper), color = 'black')
+    }
+   df_dist <- df_dist +
+        ggplot2::geom_vline(xintercept = f_dgwt_helper,linetype = 2) +
+        ggplot2::theme(legend.position = c(0.75, 0.75)) +
+        ggplot2::labs(x = "dG folding", color = "")
 
-      df_ffitness <- ggplot2::ggplot(data = vd_plot,
-              ggplot2::aes(x = f_ddg + f_dgwt_helper)) +
-          ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("f", datasets_ab[1], "_fitness")), color = 'black') +
-          ggplot2::geom_point(ggplot2::aes_string(y = paste0("f", datasets_ab[1], "_fitness"), color = "color_type")) +
-          ggplot2::geom_line(ggplot2::aes_string(y = paste0("f", datasets_ab[1], "_pred")), color = "black") +
-          # scale_y_continuous(breaks = seq(-6, 1, 1)) +
-          # scale_x_continuous(breaks = seq(-10,6,2)) +
-          ggplot2::geom_hline(yintercept = am[grep(paste0("^f", datasets_ab[1], "_fit"), parameter), c(value)],linetype = 2) +
-          ggplot2::geom_vline(xintercept = f_dgwt_helper,linetype = 2) +
-          ggplot2::labs(x = "dG folding",
-              y = paste0("folding fitness ", datasets_ab[1]),
-              color = "") +
-          ggplot2::theme(legend.position = "none")
-      if (is.factor(vd_plot$color_type)) {
-          df_ffitness <- df_ffitness + ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          df_ffitness <- df_ffitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-      }
+    df_ffitness <- ggplot2::ggplot(data = vd_plot,
+            ggplot2::aes(x = f_ddg + f_dgwt_helper)) +
+        ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_fitness")), color = 'black') +
+        ggplot2::geom_point(ggplot2::aes_string(y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_fitness"), color = "color_type")) +
+        ggplot2::geom_line(ggplot2::aes_string(y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_pred")), color = "black") +
+        # scale_y_continuous(breaks = seq(-6, 1, 1)) +
+        # scale_x_continuous(breaks = seq(-10,6,2)) +
+        ggplot2::geom_hline(yintercept = am[grep(paste0("^f", parlist[["str_abd"]][datasets_ab[1]], "_fit"), parameter), c(value)],linetype = 2) +
+        ggplot2::geom_vline(xintercept = f_dgwt_helper,linetype = 2) +
+        ggplot2::labs(x = "dG folding",
+            y = paste0("folding fitness ", parlist[["str_abd"]][datasets_ab[1]]),
+            color = "") +
+        ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        df_ffitness <- df_ffitness + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        df_ffitness <- df_ffitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
 
 
-      df_bfitness <- ggplot2::ggplot(data = vd_plot,
-              ggplot2::aes(x = f_ddg + bf_dgwt_helper)) +
-          ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_fitness")), color = 'black') +
-          ggplot2::geom_point(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_fitness"), color = "color_type")) +
-          ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_pred_bddg0")), color = "black") +
-          # ggplot2::scale_y_continuous(breaks = seq(-6, 1, 1)) +
-          # ggplot2::scale_x_continuous(breaks = seq(-10,6,2)) +
-          ggplot2::geom_hline(yintercept = am[grep(paste0("^b", datasets_ab[2], "_fit"), parameter), c(value)],linetype = 2) +
-          ggplot2::geom_vline(xintercept = bf_dgwt_helper,linetype = 2) +
-          ggplot2::labs(x = "dG folding",
-              y = paste0("binding fitness ", datasets_ab[2]),
-              color = "") +
-          ggplot2::theme(legend.position = "none")
-      if (is.factor(vd_plot$color_type)) {
-          df_bfitness <- df_bfitness + ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          df_bfitness <- df_bfitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-      }
+    df_bfitness <- ggplot2::ggplot(data = vd_plot,
+            ggplot2::aes(x = f_ddg + bf_dgwt_helper)) +
+        ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_fitness")), color = 'black') +
+        ggplot2::geom_point(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_fitness"), color = "color_type")) +
+        ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_pred_bddg0")), color = "black") +
+        # ggplot2::scale_y_continuous(breaks = seq(-6, 1, 1)) +
+        # ggplot2::scale_x_continuous(breaks = seq(-10,6,2)) +
+        ggplot2::geom_hline(yintercept = am[grep(paste0("^b", parlist[["str_bind"]][datasets_ab[2]], "_fit"), parameter), c(value)],linetype = 2) +
+        ggplot2::geom_vline(xintercept = bf_dgwt_helper,linetype = 2) +
+        ggplot2::labs(x = "dG folding",
+            y = paste0("binding fitness ", parlist[["str_bind"]][datasets_ab[2]]),
+            color = "") +
+        ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        df_bfitness <- df_bfitness + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        df_bfitness <- df_bfitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
 
-      df_db <- ggplot2::ggplot(vd_plot,
-            ggplot2::aes(x = f_ddg + f_dgwt_helper,
-                y = b_ddg + b_dgwt_helper, color = color_type)) +
-          ggplot2::geom_density2d() +
-          ggplot2::geom_point(alpha = 0.4) +
-          # ggplot2::scale_x_continuous(breaks = seq(-6,6,1)) +
-          # ggplot2::scale_y_continuous(breaks = seq(-6,6,1)) +
-          ggplot2::geom_vline(xintercept = f_dgwt_helper,linetype = 2) +
-          ggplot2::geom_hline(yintercept = b_dgwt_helper,linetype = 2) +
-          ggplot2::labs(x = "dG folding",
-              y = "dG binding",
-              color = "") +
-          ggplot2::theme(legend.position = "none")
-      if (is.factor(vd_plot$color_type)) {
-          df_db <- df_db + ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          df_db <- df_db + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-      }
+    df_db <- ggplot2::ggplot(vd_plot,
+          ggplot2::aes(x = f_ddg + f_dgwt_helper,
+              y = b_ddg + b_dgwt_helper, color = color_type)) +
+        ggplot2::geom_density2d() +
+        ggplot2::geom_point(alpha = 0.4) +
+        # ggplot2::scale_x_continuous(breaks = seq(-6,6,1)) +
+        # ggplot2::scale_y_continuous(breaks = seq(-6,6,1)) +
+        ggplot2::geom_vline(xintercept = f_dgwt_helper,linetype = 2) +
+        ggplot2::geom_hline(yintercept = b_dgwt_helper,linetype = 2) +
+        ggplot2::labs(x = "dG folding",
+            y = "dG binding",
+            color = "") +
+        ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        df_db <- df_db + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        df_db <- df_db + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
 
 
 
   } else if (parlist[["no_folded_states"]] == 2) {
-    if (parlist[["fix_dgwt"]] == FALSE) {
-      fA_dgwt_helper <- am[grep(paste0("^fA", datasets_ab[1], "_dgwt"), parameter), value]
-      fB_dgwt_helper <- am[grep(paste0("^fB", datasets_ab[1], "_dgwt"), parameter), value]
-      bfA_dgwt_helper <- am[grep(paste0("^bfA", datasets_ab[2], "_dgwt"), parameter), value]
-      bfB_dgwt_helper <- am[grep(paste0("^bfB", datasets_ab[2], "_dgwt"), parameter), value]
-      b_dgwt_helper <- am[grep(paste0("^b", datasets_ab[2], "_dgwt"), parameter), value]
+    if (parlist[["fix_f_dgwt"]] == FALSE) {
+      fA_dgwt_helper <- am[grep(paste0("^fA", parlist[["str_abd"]][datasets_ab[1]], "_dgwt"), parameter), value]
+      fB_dgwt_helper <- am[grep(paste0("^fB", parlist[["str_abd"]][datasets_ab[1]], "_dgwt"), parameter), value]
+      bfA_dgwt_helper <- am[grep(paste0("^bfA", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value]
+      bfB_dgwt_helper <- am[grep(paste0("^bfB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value]
     } else {
       fA_dgwt_helper <- bfA_dgwt_helper <- am[grep("^fA_dgwt", parameter), value]
       fB_dgwt_helper <- bfB_dgwt_helper <- am[grep("^fB_dgwt", parameter), value]
+    }
+    if (parlist[["fix_b_dgwt"]] == FALSE) {
+      b_dgwt_helper <- am[grep(paste0("^b", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value]
+    } else {
       b_dgwt_helper <- am[grep("^b_dgwt", parameter), value]
     }
-      dfA_dist <- ggplot2::ggplot(data = vd_plot)
-      if (is.factor(vd_plot$color_type)) {
-          dfA_dist <- dfA_dist +
-              ggplot2::geom_density(
-                  ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
-                      color = color_type)) +
-              ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          dfA_dist <- dfA_dist +
-              ggplot2::geom_density(
-                  ggplot2::aes(x = fA_ddg + fA_dgwt_helper),
-                      color = 'black')
-      }
-      dfA_dist <- dfA_dist +
-          ggplot2::geom_vline(xintercept = fA_dgwt_helper, linetype = 2) +
-          ggplot2::theme(legend.position = c(0.75, 0.75)) +
-          ggplot2::labs(x = "dG folding state A", color = "")
 
-      dfB_dist <- ggplot2::ggplot(data = vd_plot)
-      if (is.factor(vd_plot$color_type)) {
-          dfB_dist <- dfB_dist +
-              ggplot2::geom_density(
-                  ggplot2::aes(x = fB_ddg + fB_dgwt_helper,
-                      color = color_type)) +
-              ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          dfB_dist <- dfB_dist +
-              ggplot2::geom_density(
-                  ggplot2::aes(x = fB_ddg + fB_dgwt_helper),
-                      color = 'black')
-      }
-      dfB_dist <- dfB_dist +
-          ggplot2::geom_vline(xintercept = fB_dgwt_helper, linetype = 2) +
-          ggplot2::theme(legend.position = "none") +
-          ggplot2::coord_flip() +
-          ggplot2::labs(x = "dG folding state B", color = "")
+    dfA_dist <- ggplot2::ggplot(data = vd_plot)
+    if (is.factor(vd_plot$color_type)) {
+        dfA_dist <- dfA_dist +
+            ggplot2::geom_density(
+                ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
+                    color = color_type)) +
+            ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        dfA_dist <- dfA_dist +
+            ggplot2::geom_density(
+                ggplot2::aes(x = fA_ddg + fA_dgwt_helper),
+                    color = 'black')
+    }
+    dfA_dist <- dfA_dist +
+        ggplot2::geom_vline(xintercept = fA_dgwt_helper, linetype = 2) +
+        ggplot2::theme(legend.position = c(0.75, 0.75)) +
+        ggplot2::labs(x = "dG folding state A", color = "")
 
-      dfA_ffitness <- ggplot2::ggplot(data = vd_plot,
-              ggplot2::aes(x = fA_ddg + fA_dgwt_helper)) +
-          ggplot2::geom_density2d(ggplot2::aes_string(x = paste0('fA_ddg + fA_dgwt_helper'),
-              y = paste0("f", datasets_ab[1], "_fitness")), color = 'black') +
-          ggplot2::geom_point(ggplot2::aes_string(y = paste0("f", datasets_ab[1], "_fitness"), color = "color_type")) +
-          ggplot2::geom_line(ggplot2::aes_string(y = paste0("f", datasets_ab[1], "_pred_fBasfA")), color = "black") +
-          ggplot2::geom_line(ggplot2::aes_string(y = paste0("f", datasets_ab[1], "_pred_fBddg0")), color = "black", linetype = 3) +
-          ggplot2::geom_hline(yintercept = am[grep(paste0("^f", datasets_ab[1], "_fit"), parameter), c(value)], linetype = 2) +
-          ggplot2::geom_vline(xintercept = fA_dgwt_helper, linetype = 2) +
-          ggplot2::labs(x = "dG folding state A",
-              y = paste0("folding fitness ", datasets_ab[1]),
-              color = "") +
-          ggplot2::theme(legend.position = "none")
-      if (is.factor(vd_plot$color_type)) {
-          dfA_ffitness <- dfA_ffitness + ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          dfA_ffitness <- dfA_ffitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-      }
+    dfB_dist <- ggplot2::ggplot(data = vd_plot)
+    if (is.factor(vd_plot$color_type)) {
+        dfB_dist <- dfB_dist +
+            ggplot2::geom_density(
+                ggplot2::aes(x = fB_ddg + fB_dgwt_helper,
+                    color = color_type)) +
+            ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        dfB_dist <- dfB_dist +
+            ggplot2::geom_density(
+                ggplot2::aes(x = fB_ddg + fB_dgwt_helper),
+                    color = 'black')
+    }
+    dfB_dist <- dfB_dist +
+        ggplot2::geom_vline(xintercept = fB_dgwt_helper, linetype = 2) +
+        ggplot2::theme(legend.position = "none") +
+        ggplot2::coord_flip() +
+        ggplot2::labs(x = "dG folding state B", color = "")
 
-      dfB_ffitness <- ggplot2::ggplot(data = vd_plot,
-              ggplot2::aes(x = fB_ddg + fB_dgwt_helper)) +
-          ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("f", datasets_ab[1], "_fitness")), color = 'black') +
-          ggplot2::geom_point(ggplot2::aes_string(y = paste0("f", datasets_ab[1], "_fitness"), color = "color_type")) +
-          ggplot2::geom_line(
-              ggplot2::aes_string(y = paste0("f", datasets_ab[1], "_pred_fAasfB")),color = "black") +
-          ggplot2::geom_line(ggplot2::aes_string(y = paste0("f", datasets_ab[1], "_pred_fAddg0")), color = "black", linetype = 3) +
-          ggplot2::geom_hline(yintercept = am[grep(paste0("^f", datasets_ab[1], "_fit"), parameter), c(value)], linetype = 2) +
-          ggplot2::geom_vline(xintercept = fB_dgwt_helper, linetype = 2) +
-          ggplot2::labs(x = "dG folding state B",
-              y = paste0("folding fitness ", datasets_ab[1]),
-              color = "") +
-          ggplot2::theme(legend.position = "none")
-      if (is.factor(vd_plot$color_type)) {
-          dfB_ffitness <- dfB_ffitness + ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          dfB_ffitness <- dfB_ffitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-      }
+    dfA_ffitness <- ggplot2::ggplot(data = vd_plot,
+            ggplot2::aes(x = fA_ddg + fA_dgwt_helper)) +
+        ggplot2::geom_density2d(ggplot2::aes_string(x = paste0('fA_ddg + fA_dgwt_helper'),
+            y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_fitness")), color = 'black') +
+        ggplot2::geom_point(ggplot2::aes_string(y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_fitness"), color = "color_type")) +
+        ggplot2::geom_line(ggplot2::aes_string(y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_pred_fBasfA")), color = "black") +
+        ggplot2::geom_line(ggplot2::aes_string(y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_pred_fBddg0")), color = "black", linetype = 3) +
+        ggplot2::geom_hline(yintercept = am[grep(paste0("^f", parlist[["str_abd"]][datasets_ab[1]], "_fit"), parameter), c(value)], linetype = 2) +
+        ggplot2::geom_vline(xintercept = fA_dgwt_helper, linetype = 2) +
+        ggplot2::labs(x = "dG folding state A",
+            y = paste0("folding fitness ", parlist[["str_abd"]][datasets_ab[1]]),
+            color = "") +
+        ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        dfA_ffitness <- dfA_ffitness + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        dfA_ffitness <- dfA_ffitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
 
-      dfA_dfB <- ggplot2::ggplot(vd_plot,
-            ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
-                y = fB_ddg + fB_dgwt_helper, color = color_type)) +
-          ggplot2::geom_density2d() +
-          ggplot2::geom_point(alpha = 0.4) +
-          ggplot2::geom_vline(xintercept = fA_dgwt_helper, linetype = 2) +
-          ggplot2::geom_hline(yintercept = fB_dgwt_helper, linetype = 2) +
-          ggplot2::geom_abline(color = "red",
-              intercept = fB_dgwt_helper -
-                          fA_dgwt_helper) +
-          ggplot2::labs(x = "dG folding state A",
-              y = "dG folding state B",
-              color = "") +
-          ggplot2::theme(legend.position = "none")
-      if (is.factor(vd_plot$color_type)) {
-          dfA_dfB <- dfA_dfB + ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          dfA_dfB <- dfA_dfB + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-      }
+    dfB_ffitness <- ggplot2::ggplot(data = vd_plot,
+            ggplot2::aes(x = fB_ddg + fB_dgwt_helper)) +
+        ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_fitness")), color = 'black') +
+        ggplot2::geom_point(ggplot2::aes_string(y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_fitness"), color = "color_type")) +
+        ggplot2::geom_line(
+            ggplot2::aes_string(y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_pred_fAasfB")),color = "black") +
+        ggplot2::geom_line(ggplot2::aes_string(y = paste0("f", parlist[["str_abd"]][datasets_ab[1]], "_pred_fAddg0")), color = "black", linetype = 3) +
+        ggplot2::geom_hline(yintercept = am[grep(paste0("^f", parlist[["str_abd"]][datasets_ab[1]], "_fit"), parameter), c(value)], linetype = 2) +
+        ggplot2::geom_vline(xintercept = fB_dgwt_helper, linetype = 2) +
+        ggplot2::labs(x = "dG folding state B",
+            y = paste0("folding fitness ", parlist[["str_abd"]][datasets_ab[1]]),
+            color = "") +
+        ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        dfB_ffitness <- dfB_ffitness + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        dfB_ffitness <- dfB_ffitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
+
+    dfA_dfB <- ggplot2::ggplot(vd_plot,
+          ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
+              y = fB_ddg + fB_dgwt_helper, color = color_type)) +
+        ggplot2::geom_density2d() +
+        ggplot2::geom_point(alpha = 0.4) +
+        ggplot2::geom_vline(xintercept = fA_dgwt_helper, linetype = 2) +
+        ggplot2::geom_hline(yintercept = fB_dgwt_helper, linetype = 2) +
+        ggplot2::geom_abline(color = "red",
+            intercept = fB_dgwt_helper -
+                        fA_dgwt_helper) +
+        ggplot2::labs(x = "dG folding state A",
+            y = "dG folding state B",
+            color = "") +
+        ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        dfA_dfB <- dfA_dfB + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        dfA_dfB <- dfA_dfB + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
 
 
 
-      dfA_db <- ggplot2::ggplot(vd_plot,
-            ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
-                y = b_ddg + b_dgwt_helper, color = color_type)) +
-          ggplot2::geom_density2d() +
-          ggplot2::geom_point(alpha = 0.4) +
-          ggplot2::geom_vline(xintercept = fA_dgwt_helper,linetype = 2) +
-          ggplot2::geom_hline(yintercept = b_dgwt_helper,linetype = 2) +
-          ggplot2::labs(x = "dG folding state A",
-              y = "dG binding",
-              color = "") +
-          ggplot2::theme(legend.position = "none")
-      if (is.factor(vd_plot$color_type)) {
-          dfA_db <- dfA_db + ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          dfA_db <- dfA_db + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-      }
+    dfA_db <- ggplot2::ggplot(vd_plot,
+          ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
+              y = b_ddg + b_dgwt_helper, color = color_type)) +
+        ggplot2::geom_density2d() +
+        ggplot2::geom_point(alpha = 0.4) +
+        ggplot2::geom_vline(xintercept = fA_dgwt_helper,linetype = 2) +
+        ggplot2::geom_hline(yintercept = b_dgwt_helper,linetype = 2) +
+        ggplot2::labs(x = "dG folding state A",
+            y = "dG binding",
+            color = "") +
+        ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        dfA_db <- dfA_db + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        dfA_db <- dfA_db + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
 
-      dfB_db <- ggplot2::ggplot(vd_plot,
-            ggplot2::aes(x = fB_ddg + fB_dgwt_helper,
-                y = b_ddg + b_dgwt_helper, color = color_type)) +
-          ggplot2::geom_density2d() +
-          ggplot2::geom_point(alpha = 0.4) +
-          ggplot2::geom_vline(xintercept = fB_dgwt_helper,linetype = 2) +
-          ggplot2::geom_hline(yintercept = b_dgwt_helper,linetype = 2) +
-          ggplot2::labs(x = "dG folding state B",
-              y = "dG binding",
-              color = "") +
-          ggplot2::theme(legend.position = "none")
-      if (is.factor(vd_plot$color_type)) {
-          dfB_db <- dfB_db + ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          dfB_db <- dfB_db + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-      }
+    dfB_db <- ggplot2::ggplot(vd_plot,
+          ggplot2::aes(x = fB_ddg + fB_dgwt_helper,
+              y = b_ddg + b_dgwt_helper, color = color_type)) +
+        ggplot2::geom_density2d() +
+        ggplot2::geom_point(alpha = 0.4) +
+        ggplot2::geom_vline(xintercept = fB_dgwt_helper,linetype = 2) +
+        ggplot2::geom_hline(yintercept = b_dgwt_helper,linetype = 2) +
+        ggplot2::labs(x = "dG folding state B",
+            y = "dG binding",
+            color = "") +
+        ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        dfB_db <- dfB_db + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        dfB_db <- dfB_db + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
 
-      dfA_bfitness <- ggplot2::ggplot(data = vd_plot,
-              ggplot2::aes(x = fA_ddg + bfA_dgwt_helper)) +
-          ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_fitness")), color = 'black') +
-          ggplot2::geom_point(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_fitness"), color = "color_type")) +
-          ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_pred_fBasfA")),color = "black") +
-          ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_pred_fBddg0")), color = "black", linetype = 3) +
-          ggplot2::geom_hline(yintercept = am[grep(paste0("^b", datasets_ab[2], "_fit"), parameter), c(value)],linetype = 2) +
-          ggplot2::geom_vline(xintercept = bfA_dgwt_helper,linetype = 2) +
-          ggplot2::labs(x = "dG folding state A",
-              y = paste0("binding fitness ", datasets_ab[2]),
-              color = "") +
-          ggplot2::theme(legend.position = "none")
-      if (is.factor(vd_plot$color_type)) {
-          dfA_bfitness <- dfA_bfitness + ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          dfA_bfitness <- dfA_bfitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-      }
+    dfA_bfitness <- ggplot2::ggplot(data = vd_plot,
+            ggplot2::aes(x = fA_ddg + bfA_dgwt_helper)) +
+        ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_fitness")), color = 'black') +
+        ggplot2::geom_point(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_fitness"), color = "color_type")) +
+        ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_pred_fBasfA")),color = "black") +
+        ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_pred_fBddg0")), color = "black", linetype = 3) +
+        ggplot2::geom_hline(yintercept = am[grep(paste0("^b", parlist[["str_bind"]][datasets_ab[2]], "_fit"), parameter), c(value)],linetype = 2) +
+        ggplot2::geom_vline(xintercept = bfA_dgwt_helper,linetype = 2) +
+        ggplot2::labs(x = "dG folding state A",
+            y = paste0("binding fitness ", parlist[["str_bind"]][datasets_ab[2]]),
+            color = "") +
+        ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        dfA_bfitness <- dfA_bfitness + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        dfA_bfitness <- dfA_bfitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
 
-      dfB_bfitness <- ggplot2::ggplot(data = vd_plot,
-              ggplot2::aes(x = fB_ddg + bfB_dgwt_helper)) +
-          ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_fitness")), color = 'black') +
-          ggplot2::geom_point(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_fitness"), color = "color_type")) +
-          ggplot2::geom_line(
-              ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_pred_fAasfB")),color = "black") +
-          ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_pred_fAddg0")), color = "black", linetype = 3) +
-          ggplot2::geom_hline(yintercept = am[grep(paste0("^b", datasets_ab[2], "_fit"), parameter), c(value)],linetype = 2) +
-          ggplot2::geom_vline(xintercept = bfB_dgwt_helper,linetype = 2) +
-          ggplot2::labs(x = "dG folding state B",
-              y = paste0("binding fitness ", datasets_ab[2]),
-              color = "") +
-          ggplot2::theme(legend.position = "none")
-      if (is.factor(vd_plot$color_type)) {
-          dfB_bfitness <- dfB_bfitness + ggplot2::scale_color_brewer(palette = "Set1")
-      } else {
-          dfB_bfitness <- dfB_bfitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
-      }
+    dfB_bfitness <- ggplot2::ggplot(data = vd_plot,
+            ggplot2::aes(x = fB_ddg + bfB_dgwt_helper)) +
+        ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_fitness")), color = 'black') +
+        ggplot2::geom_point(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_fitness"), color = "color_type")) +
+        ggplot2::geom_line(
+            ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_pred_fAasfB")),color = "black") +
+        ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_pred_fAddg0")), color = "black", linetype = 3) +
+        ggplot2::geom_hline(yintercept = am[grep(paste0("^b", parlist[["str_bind"]][datasets_ab[2]], "_fit"), parameter), c(value)],linetype = 2) +
+        ggplot2::geom_vline(xintercept = bfB_dgwt_helper,linetype = 2) +
+        ggplot2::labs(x = "dG folding state B",
+            y = paste0("binding fitness ", parlist[["str_bind"]][datasets_ab[2]]),
+            color = "") +
+        ggplot2::theme(legend.position = "none")
+    if (is.factor(vd_plot$color_type)) {
+        dfB_bfitness <- dfB_bfitness + ggplot2::scale_color_brewer(palette = "Set1")
+    } else {
+        dfB_bfitness <- dfB_bfitness + ggplot2::scale_color_gradient(low = col_orange, high = col_purple)
+    }
 
   } else {
       print(paste0(parlist[["no_folded_states"]], " folded states currently not supported"))
@@ -422,15 +429,15 @@ dg_basic_analyses <- function(
 
   db_bfitness <- ggplot2::ggplot(data = vd_plot,
           ggplot2::aes(x = b_ddg + b_dgwt_helper)) +
-      ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_fitness")), color = 'black') +
-      ggplot2::geom_point(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_fitness"), color = "color_type")) +
-      ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", datasets_ab[2], "_pred_fddg0")), color = "black") +
+      ggplot2::geom_density2d(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_fitness")), color = 'black') +
+      ggplot2::geom_point(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_fitness"), color = "color_type")) +
+      ggplot2::geom_line(ggplot2::aes_string(y = paste0("b", parlist[["str_bind"]][datasets_ab[2]], "_pred_fddg0")), color = "black") +
       # ggplot2::scale_y_continuous(breaks = seq(-6, 1, 1)) +
       # ggplot2::scale_x_continuous(breaks = seq(-6,6,1))
-      ggplot2::geom_hline(yintercept = am[grep(paste0("^b", datasets_ab[2], "_fit"), parameter), c(value)],linetype = 2) +
+      ggplot2::geom_hline(yintercept = am[grep(paste0("^b", parlist[["str_bind"]][datasets_ab[2]], "_fit"), parameter), c(value)],linetype = 2) +
       ggplot2::geom_vline(xintercept = b_dgwt_helper,linetype = 2) +
       ggplot2::labs(x = "dG binding",
-          y = paste0("binding fitness ", datasets_ab[2]),
+          y = paste0("binding fitness ", parlist[["str_bind"]][datasets_ab[2]]),
           color = "") +
       ggplot2::theme(legend.position = "none")
   if (is.factor(vd_plot$color_type)) {
@@ -449,7 +456,7 @@ dg_basic_analyses <- function(
                         nrow = 2),
           file = file.path(dataset_folder, model_name,
               paste0("results/dG_fitness_f",
-                datasets_ab[1], "b", datasets_ab[2], "_", color_type,
+                parlist[["str_abd"]][datasets_ab[1]], "b", parlist[["str_bind"]][datasets_ab[2]], "_", color_type,
                 ifelse(stage == "bootstrap", "_boot",""), ".pdf")),
           width = 10,
           height = 7)
@@ -461,7 +468,7 @@ dg_basic_analyses <- function(
                         nrow = 2),
           file = file.path(dataset_folder, model_name,
               paste0("results/dG_folding_fitness_fA",
-                datasets_ab[1], "_fB", datasets_ab[2], "_", color_type,
+                parlist[["str_abd"]][datasets_ab[1]], "_fB", parlist[["str_abd"]][datasets_ab[1]], "_", color_type,
                 ifelse(stage == "bootstrap", "_boot",""),  ".pdf")),
           width = 10,
           height = 7)
@@ -473,7 +480,7 @@ dg_basic_analyses <- function(
                         nrow = 2),
           file = file.path(dataset_folder, model_name,
               paste0("results/dG_binding_fitness_b",
-                datasets_ab[1], "_fA", datasets_ab[1], "_fB", datasets_ab[2],
+                parlist[["str_bind"]][datasets_ab[2]], "_fA", parlist[["str_abd"]][datasets_ab[1]], "_fB", parlist[["str_abd"]][datasets_ab[1]],
                 "_", color_type,
                 ifelse(stage == "bootstrap", "_boot",""), ".pdf")),
           width = 10,
@@ -578,11 +585,11 @@ dg_basic_analyses <- function(
       # fA vs fB
       dfA_dfB_dfAsig <- ggplot2::ggplot(vd_plot,
             ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
-                y = fB_ddg + am[grep(paste0("^fB", datasets_ab[2], "_dgwt"), parameter), value])) +
+                y = fB_ddg + am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value])) +
           ggplot2::geom_density2d(color = 'black', alpha = 0.25) +
           ggplot2::geom_point(ggplot2::aes(color = color_type,shape = fA_ddg_fdr < fdr_thres)) +
           ggplot2::geom_vline(xintercept = fA_dgwt_helper,linetype = 2) +
-          # ggplot2::geom_hline(yintercept = am[grep(paste0("^fB", datasets_ab[2], "_dgwt"), parameter), value],linetype = 4) +
+          # ggplot2::geom_hline(yintercept = am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value],linetype = 4) +
           ggplot2::scale_shape_manual(values = c(1, 19)) +
           ggplot2::labs(x = "dG folding state A",
               y = "dG folding state B",
@@ -597,11 +604,11 @@ dg_basic_analyses <- function(
 
       dfA_dfB_dfBsig <- ggplot2::ggplot(vd_plot,
             ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
-                y = fB_ddg + am[grep(paste0("^fB", datasets_ab[2], "_dgwt"), parameter), value])) +
+                y = fB_ddg + am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value])) +
           ggplot2::geom_density2d(color = 'black', alpha = 0.25) +
           ggplot2::geom_point(ggplot2::aes(color = color_type,shape = fB_ddg_fdr < fdr_thres)) +
           # ggplot2::geom_vline(xintercept = fA_dgwt_helper,linetype = 4) +
-          ggplot2::geom_hline(yintercept = am[grep(paste0("^fB", datasets_ab[2], "_dgwt"), parameter), value],linetype = 2) +
+          ggplot2::geom_hline(yintercept = am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value],linetype = 2) +
           ggplot2::scale_shape_manual(values = c(1, 19)) +
           ggplot2::labs(x = "dG folding state A",
               y = "dG folding state B",
@@ -616,11 +623,11 @@ dg_basic_analyses <- function(
 
       dfA_dfB_sig <- ggplot2::ggplot(vd_plot,
             ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
-                y = fB_ddg + am[grep(paste0("^fB", datasets_ab[2], "_dgwt"), parameter), value])) +
+                y = fB_ddg + am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value])) +
           ggplot2::geom_density2d(color = 'black', alpha = 0.25) +
           ggplot2::geom_point(ggplot2::aes(color = color_type,shape = fA_ddg_fdr < fdr_thres & fB_ddg_fdr < fdr_thres)) +
           ggplot2::geom_vline(xintercept = fA_dgwt_helper,linetype = 2) +
-          ggplot2::geom_hline(yintercept = am[grep(paste0("^fB", datasets_ab[2], "_dgwt"), parameter), value],linetype = 2) +
+          ggplot2::geom_hline(yintercept = am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value],linetype = 2) +
           ggplot2::scale_shape_manual(values = c(1, 19)) +
           ggplot2::labs(x = "dG folding state A",
               y = "dG folding state B",
@@ -894,7 +901,7 @@ dg_basic_analyses <- function(
   ggplot2::ggsave(plot_list[[plot_ind]],
       file = file.path(dataset_folder, model_name,
         paste0("results/fitness_scatter_dg_relationship_fA",
-          datasets_ab[1], "_fB", datasets_ab[2], "_", color_type,
+          parlist[["str_abd"]][datasets_ab[1]], "_fB", parlist[["str_abd"]][datasets_ab[1]], "_", color_type,
                 ifelse(stage == "bootstrap", "_boot",""), ".pdf")),
       width = 4,
       height = 3.5)

@@ -47,28 +47,24 @@ dg__model_fn <- function(
 
   	## folding phenotype
   	if (varlist[["no_abd_datasets"]] > 0) {
-  		for (i in 1:varlist[["no_abd_datasets"]]) {
-        if (parlist[["fix_dgwt"]] == FALSE) {
-          f_fitpred <- convert_dg2foldingfitness(
-            f_ddg_var = f_ddg_var,
-            f_dgwt = global_par[grep(paste0("^f[AB]?", i, "_dgwt"), names(global_par))],
-            f_fitwt = global_par[grep(paste0("f", i, "_fitwt"), names(global_par))],
-            f_fit0 = global_par[grep(paste0("f", i, "_fit0"), names(global_par))],
-            fitness_scale = varlist[["fitness_scale"]],
-            no_folded_states = parlist[["no_folded_states"]]
-          )
+  		for (i in parlist[["str_abd"]]) {
+        # pre-extract folding dgwt values
+        if (parlist[["fix_f_dgwt"]] == FALSE) {
+          f_dgwt <- global_par[grep(paste0("^f[AB]?", i, "_dgwt"), names(global_par))]
         } else {
-          f_fitpred <- convert_dg2foldingfitness(
-            f_ddg_var = f_ddg_var,
-            f_dgwt = global_par[grep("^f[AB]?_dgwt", names(global_par))],
-            f_fitwt = global_par[grep(paste0("f", i, "_fitwt"), names(global_par))],
-            f_fit0 = global_par[grep(paste0("f", i, "_fit0"), names(global_par))],
-            fitness_scale = varlist[["fitness_scale"]],
-            no_folded_states = parlist[["no_folded_states"]]
-          )
+          f_dgwt <- global_par[grep("^f[AB]?_dgwt", names(global_par))]
         }
+        # predict fitness for each dataset
+        f_fitpred <- convert_dg2foldingfitness(
+          f_ddg_var = f_ddg_var,
+          f_dgwt = f_dgwt,
+          f_fitwt = global_par[grep(paste0("f", i, "_fitwt"), names(global_par))],
+          f_fit0 = global_par[grep(paste0("f", i, "_fit0"), names(global_par))],
+          fitness_scale = varlist[["fitness_scale"]],
+          no_folded_states = parlist[["no_folded_states"]]
+        )
 
-
+        # add msd
   			msd <- msd + sum(((varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("f", i, "_fitness")] -
   					f_fitpred) /
   					varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("f", i, "_sigma")])^2,
@@ -79,30 +75,29 @@ dg__model_fn <- function(
 
   	## binding phenotype
     if (varlist[["no_bind_datasets"]] > 0) {
-      for (i in 1:varlist[["no_bind_datasets"]]) {
-        if (parlist[["fix_dgwt"]] == FALSE) {
-          b_fitpred <- convert_dg2bindingfitness(
-            b_ddg_var = b_ddg_var,
-            f_ddg_var = f_ddg_var,
-            b_dgwt = global_par[grep(paste0("b", i, "_dgwt"), names(global_par))],
-            f_dgwt = global_par[grep(paste0("^bf[AB]?", i, "_dgwt"), names(global_par))],
-            b_fitwt = global_par[grep(paste0("b", i, "_fitwt"), names(global_par))],
-            b_fit0 = global_par[grep(paste0("b", i, "_fit0"), names(global_par))],
-            fitness_scale = varlist[["fitness_scale"]],
-            no_folded_states = parlist[["no_folded_states"]]
-          )
+      for (i in parlist[["str_bind"]]) {
+        # pre-extract binding dgwt values
+        if (parlist[["fix_b_dgwt"]] == FALSE) {
+          b_dgwt <- global_par[grep(paste0("b", i, "_dgwt"), names(global_par))]
         } else {
-          b_fitpred <- convert_dg2bindingfitness(
-            b_ddg_var = b_ddg_var,
-            f_ddg_var = f_ddg_var,
-            b_dgwt = global_par[grep("b_dgwt", names(global_par))],
-            f_dgwt = global_par[grep("^f[AB]?_dgwt", names(global_par))],
-            b_fitwt = global_par[grep(paste0("b", i, "_fitwt"), names(global_par))],
-            b_fit0 = global_par[grep(paste0("b", i, "_fit0"), names(global_par))],
-            fitness_scale = varlist[["fitness_scale"]],
-            no_folded_states = parlist[["no_folded_states"]]
-          )
+          b_dgwt <- global_par[grep("b_dgwt", names(global_par))]
         }
+        if (parlist[["fix_f_dgwt"]] == FALSE) {
+          bf_dgwt <- global_par[grep(paste0("^bf[AB]?", i, "_dgwt"), names(global_par))]
+        } else {
+          bf_dgwt <- global_par[grep("^f[AB]?_dgwt", names(global_par))]
+        }
+
+        b_fitpred <- convert_dg2bindingfitness(
+          b_ddg_var = b_ddg_var,
+          f_ddg_var = f_ddg_var,
+          b_dgwt = b_dgwt,
+          f_dgwt = bf_dgwt,
+          b_fitwt = global_par[grep(paste0("b", i, "_fitwt"), names(global_par))],
+          b_fit0 = global_par[grep(paste0("b", i, "_fit0"), names(global_par))],
+          fitness_scale = varlist[["fitness_scale"]],
+          no_folded_states = parlist[["no_folded_states"]]
+        )
 
         msd <- msd + sum(((varlist[["variant_data"]][, unlist(.SD), .SDcols = paste0("b", i, "_fitness")] -
             b_fitpred) /

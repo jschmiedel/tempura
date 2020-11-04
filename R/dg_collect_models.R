@@ -131,8 +131,8 @@ dg_collect_models <- function(
                             x = unlist(.SD[, 1]),
                             y = unlist(.SD[, 2]),
                             .SD[,3]),
-                        .SDcols = c(paste0("f", ds, "_pred"),
-                            paste0("f", ds, "_fitness"),
+                        .SDcols = c(paste0("f", parlist[["str_abd"]][ds], "_pred"),
+                            paste0("f", parlist[["str_abd"]][ds], "_fitness"),
                             "test_set")],
                     ggplot2::aes(x,y)) +
                 ggplot2::geom_point() +
@@ -153,8 +153,8 @@ dg_collect_models <- function(
                                 x = unlist(.SD[, 1]),
                                 y = unlist(.SD[, 2]),
                                 .SD[,3]),
-                            .SDcols = c(paste0("b", ds, "_pred"),
-                                paste0("b", ds, "_fitness"),
+                            .SDcols = c(paste0("b", parlist[["str_bind"]][ds], "_pred"),
+                                paste0("b", parlist[["str_bind"]][ds], "_fitness"),
                                 "test_set")],
                         ggplot2::aes(x,y)) +
                 ggplot2::geom_point() +
@@ -435,17 +435,6 @@ dg_collect_models <- function(
           file = file.path(dataset_folder, model_name, "model_results.RData"),
           quote = F,
           row.names = F)
-
-
-    } else if (stage == "pll") {
-        ## collect pll runs
-
-
-        ## plot some basic stuff
-
-
-        ## write to file (append to previous table?!)
-
 
 
     } else {print("stage parameter not defined properly")}
