@@ -66,13 +66,16 @@ dg_collect_models <- function(
             .SDcols = names(dt_models)[!grepl("ddg", names(dt_models))]]
         global_pars[, objective := log10(objective)]
 
-        p <- GGally::ggpairs(global_pars[objective < min(c(min(objective) + 0.2, stats::quantile(objective, 0.9)))],
+        if (sum(grepl("^[obf]",names(global_pars))) <= 20) {
+          p <- GGally::ggpairs(global_pars[objective < min(c(min(objective) + 0.2, stats::quantile(objective, 0.9)))][
+              sample(.N, min(c(.N, .N * 10 / sum(grepl("^[obf]",names(global_pars))))))],
             columns = grep("^[obf]",names(global_pars)),
             ggplot2::aes(colour = factor(test_set)))
-        ggplot2::ggsave(p,
-            file = file.path(dataset_folder, model_name, "results", "global_par_distribution_allmodels.pdf"),
-            width = 15,
-            height = 15)
+          ggplot2::ggsave(p,
+              file = file.path(dataset_folder, model_name, "results", "global_par_distribution_allmodels.pdf"),
+              width = 15,
+              height = 15)
+        }
 
 
         ## extract best model per train/test set
@@ -142,46 +145,51 @@ dg_collect_models <- function(
                 ggplot2::geom_point() +
                 ggplot2::geom_abline(color = "red") +
                 ggplot2::geom_smooth() +
-                ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.1)) +
-                ggplot2::scale_y_continuous(breaks = seq(0, 1, 0.1)) +
                 ggpubr::stat_cor(ggplot2::aes(color = factor(test_set), label = ..rr.label..)) +
                 ggplot2::labs(x = "predicted fitness",
                     y = "measured fitness",
                     title = paste0("abundance dataset ", ds),
                     color = "train/test set")
+            if (varlist[["fitness_scale"]] == "lin") {
+              plot_list[[ds]] <- plot_list[[ds]] +
+                ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.1)) +
+                ggplot2::scale_y_continuous(breaks = seq(0, 1, 0.1))
+            }
         }
         for (ds in 1:varlist[["no_bind_datasets"]]) {
-            plot_list[[varlist[["no_abd_datasets"]] + ds]] <-
-                ggplot2::ggplot(
-                    variant_data[!is.na(get(paste0("b", parlist[["str_bind"]][ds], "_pred")))][
-                      sample(.N, min(c(.N, 5e3))),
-                            list(
-                                x = unlist(.SD[, 1]),
-                                y = unlist(.SD[, 2]),
-                                .SD[,3]),
-                            .SDcols = c(paste0("b", parlist[["str_bind"]][ds], "_pred"),
-                                paste0("b", parlist[["str_bind"]][ds], "_fitness"),
-                                "test_set")],
-                        ggplot2::aes(x,y)) +
-                ggplot2::geom_point() +
-                ggplot2::geom_abline(color = "red") +
-                ggplot2::geom_smooth() +
-                ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.1)) +
-                ggplot2::scale_y_continuous(breaks = seq(0, 1, 0.1)) +
-                ggpubr::stat_cor(ggplot2::aes(color = factor(test_set), label = ..rr.label..)) +
-                ggplot2::labs(
-                    x = "predicted fitness",
-                    y = "measured fitness",
-                    title = paste0("binding dataset ", ds),
-                    color = "train/test set")
+          plot_list[[varlist[["no_abd_datasets"]] + ds]] <-
+            ggplot2::ggplot(
+                variant_data[!is.na(get(paste0("b", parlist[["str_bind"]][ds], "_pred")))][
+                  sample(.N, min(c(.N, 5e3))),
+                        list(
+                            x = unlist(.SD[, 1]),
+                            y = unlist(.SD[, 2]),
+                            .SD[,3]),
+                        .SDcols = c(paste0("b", parlist[["str_bind"]][ds], "_pred"),
+                            paste0("b", parlist[["str_bind"]][ds], "_fitness"),
+                            "test_set")],
+                    ggplot2::aes(x,y)) +
+            ggplot2::geom_point() +
+            ggplot2::geom_abline(color = "red") +
+            ggplot2::geom_smooth() +
+            ggpubr::stat_cor(ggplot2::aes(color = factor(test_set), label = ..rr.label..)) +
+            ggplot2::labs(
+                x = "predicted fitness",
+                y = "measured fitness",
+                title = paste0("binding dataset ", ds),
+                color = "train/test set")
+          if (varlist[["fitness_scale"]] == "lin") {
+            plot_list[[ds]] <- plot_list[[ds]] +
+              ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.1)) +
+              ggplot2::scale_y_continuous(breaks = seq(0, 1, 0.1))
+          }
         }
         ggplot2::ggsave(gridExtra::grid.arrange(grobs = plot_list,
-                          nrow = ceiling(sqrt(length(plot_list))),
-                          ncol = ceiling(sqrt(length(plot_list)))),
+                          nrow = ceiling(length(plot_list)/min(3, ceiling(sqrt(length(plot_list))))),
+                          ncol = min(3, ceiling(sqrt(length(plot_list))))),
             file = file.path(dataset_folder, model_name, "results/prediction_performance_fitness.pdf"),
-            width = 6 * ceiling(sqrt(length(plot_list))),
-            height = 5 * ceiling(sqrt(length(plot_list))))
-
+            width = 6 * min(3, ceiling(sqrt(length(plot_list)))),
+            height = 5 * ceiling(length(plot_list)/min(3, ceiling(sqrt(length(plot_list))))))
 
         ## plot Pearson's R across train/test sets
         pp_melt <- melt(prediction_performance, id.vars = "test_set")
@@ -227,7 +235,7 @@ dg_collect_models <- function(
         )
         # output Pearson R
         pp <- melt(X[["prediction_performance"]], id.vars = "test_set")
-        cat("prediction performance of average model: \n", pp[, paste0(variable, " = ", round(value,3), "\n")])
+        cat("prediction performance of average model [R2]: \n", pp[, paste0(variable, " = ", round(value^2,3), "\n")])
 
         # predict all fitness values given average parameters
         variant_data <- X[["variant_data"]]
