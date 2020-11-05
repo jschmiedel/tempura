@@ -20,7 +20,9 @@ dg_collect_models <- function(
     stage = "model"
 ){
 
-    objective <- test_set <- varlist <- parlist <- x <- y <- value <- variable <- parameter <- convergence <- type <- dataset <- dgwt_type <- fit_type <- iteration <- NULL
+    objective <- test_set <- varlist <- parlist <- x <- y <- value <-
+      variable <- parameter <- convergence <- type <- dataset <- dgwt_type <-
+      fit_type <- iteration <- `..rr.label..` <- NULL
 
     ggplot2::theme_set(ggplot2::theme_bw(base_size = 8))
 
@@ -81,7 +83,7 @@ dg_collect_models <- function(
         ## compare global parameters across best models
         if (nrow(best_models) > 1) {
 
-            global_pars <- reshape2::melt(best_models[,
+            global_pars <- melt(best_models[,
                 .SD,
                 .SDcols = names(best_models)[grepl("^[fbt]", names(best_models))]], id.vars = "test_set")
 
@@ -127,7 +129,9 @@ dg_collect_models <- function(
         plot_list = list()
         for (ds in 1:varlist[["no_abd_datasets"]]) {
             plot_list[[ds]] <- ggplot2::ggplot(
-                    variant_data[, list(
+                    variant_data[!is.na(get(paste0("f", parlist[["str_abd"]][ds], "_pred")))][
+                      sample(.N, min(c(.N, 5e3))),
+                        list(
                             x = unlist(.SD[, 1]),
                             y = unlist(.SD[, 2]),
                             .SD[,3]),
@@ -140,7 +144,7 @@ dg_collect_models <- function(
                 ggplot2::geom_smooth() +
                 ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.1)) +
                 ggplot2::scale_y_continuous(breaks = seq(0, 1, 0.1)) +
-                ggpubr::stat_cor(ggplot2::aes(color = factor(test_set))) +
+                ggpubr::stat_cor(ggplot2::aes(color = factor(test_set), label = ..rr.label..)) +
                 ggplot2::labs(x = "predicted fitness",
                     y = "measured fitness",
                     title = paste0("abundance dataset ", ds),
@@ -149,7 +153,9 @@ dg_collect_models <- function(
         for (ds in 1:varlist[["no_bind_datasets"]]) {
             plot_list[[varlist[["no_abd_datasets"]] + ds]] <-
                 ggplot2::ggplot(
-                    variant_data[, list(
+                    variant_data[!is.na(get(paste0("b", parlist[["str_bind"]][ds], "_pred")))][
+                      sample(.N, min(c(.N, 5e3))),
+                            list(
                                 x = unlist(.SD[, 1]),
                                 y = unlist(.SD[, 2]),
                                 .SD[,3]),
@@ -162,14 +168,13 @@ dg_collect_models <- function(
                 ggplot2::geom_smooth() +
                 ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.1)) +
                 ggplot2::scale_y_continuous(breaks = seq(0, 1, 0.1)) +
-                ggpubr::stat_cor(ggplot2::aes(color = factor(test_set))) +
+                ggpubr::stat_cor(ggplot2::aes(color = factor(test_set), label = ..rr.label..)) +
                 ggplot2::labs(
                     x = "predicted fitness",
                     y = "measured fitness",
                     title = paste0("binding dataset ", ds),
                     color = "train/test set")
         }
-        # p <-
         ggplot2::ggsave(gridExtra::grid.arrange(grobs = plot_list,
                           nrow = ceiling(sqrt(length(plot_list))),
                           ncol = ceiling(sqrt(length(plot_list)))),
@@ -179,13 +184,16 @@ dg_collect_models <- function(
 
 
         ## plot Pearson's R across train/test sets
-        pp_melt <- reshape2::melt(prediction_performance, id.vars = "test_set")
-        p <- ggplot2::ggplot(pp_melt, ggplot2::aes(x = test_set, y = value, fill = variable)) +
-            ggplot2::geom_bar(stat = "identity", position="dodge") +
-            ggplot2::scale_x_continuous(breaks = sort(unique(best_models[, test_set]))) +
-            ggplot2::labs(x = "train/test set",
-                    y = "Pearson's R",
-                    title = paste0("average R: ", pp_melt[, list(value = mean(value)), variable][, paste0(variable, " = ", round(value, 3), collapse = ", ")]))
+        pp_melt <- melt(prediction_performance, id.vars = "test_set")
+        p <- ggplot2::ggplot(pp_melt, ggplot2::aes(x = variable, y = value^2, fill = factor(test_set))) +
+            ggplot2::geom_bar(stat = "identity", position = "dodge") +
+            ggplot2::geom_point(inherit.aes = FALSE,
+              data = pp_melt[, list(value = mean(value^2)), variable],
+              ggplot2::aes(x = variable, y = value), color = "black", size = 2) +
+            ggplot2::labs(x = "datasets",
+                    y = "R squared",
+                    fill = "train/test set",
+                    title = paste0("avg R^2: ", pp_melt[, list(value = mean(value^2)), variable][, paste0(variable, " = ", round(value, 3), collapse = ", ")]))
         ggplot2::ggsave(p,
                 file = file.path(dataset_folder, model_name, "results/prediction_performance_fitness_R.pdf"),
                 width = 5,
@@ -193,7 +201,10 @@ dg_collect_models <- function(
 
 
         ## average over parameters from different train/test sets
-        best_models_melt <- reshape2::melt(best_models[, .SD, .SDcols = !grepl("^[toci]", names(best_models))])
+        best_models_melt <- melt(best_models[,
+            .SD,
+            .SDcols = !grepl("^[oci]", names(best_models))],
+          id.vars = "test_set")
         parameter_vec <- unique(best_models_melt$variable)
         if (model_averaging == "median") {
             avg_model <- best_models_melt[value != 0, list(value = stats::median(value)), list(parameter = variable)]
@@ -215,7 +226,7 @@ dg_collect_models <- function(
             calc_performance = TRUE
         )
         # output Pearson R
-        pp <- melt(X[["prediction_performance"]][, .SD, .SDcols = grep("^[fb]", names(X[["prediction_performance"]]))])
+        pp <- melt(X[["prediction_performance"]], id.vars = "test_set")
         cat("prediction performance of average model: \n", pp[, paste0(variable, " = ", round(value,3), "\n")])
 
         # predict all fitness values given average parameters

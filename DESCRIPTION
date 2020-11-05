@@ -23,6 +23,5 @@ Imports:
     GGally,
     ggpubr,
     gridExtra,
-    reshape2,
     doMC,
     foreach

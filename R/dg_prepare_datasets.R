@@ -17,7 +17,7 @@ dg_prepare_datasets = function(
 	abundancepca_files,
 	bindingpca_files,
 	wt_seq = "",
-	train_test_split = c(10, 0.1),
+	train_test_split = c(10, 1e-1),
 	fitness_scale = "lin"
 ) {
 

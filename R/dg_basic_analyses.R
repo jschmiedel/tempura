@@ -20,9 +20,9 @@ dg_basic_analyses <- function(
     max_variants = 3e3,
     datasets_ab = c(1, 1),
     stage = "",
-    fdr_thres = 0.01
+    fdr_thres = 1e-2
 ){
-1
+
   varlist <- parlist <- f_ddg <- parameter <- value <- fA_ddg <- fB_ddg <-
     b_ddg <- aa_subs <- Pos <- b_ddg_fdr <- b_ddg_sd <- boot_mean <- boot_sd <-
     fA_ddg_fdr <- fA_ddg_sd <- fB_ddg_fdr <- fB_ddg_sd <- f_ddg_fdr <-
@@ -585,11 +585,11 @@ dg_basic_analyses <- function(
       # fA vs fB
       dfA_dfB_dfAsig <- ggplot2::ggplot(vd_plot,
             ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
-                y = fB_ddg + am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value])) +
+                y = fB_ddg + fB_dgwt_helper)) +
           ggplot2::geom_density2d(color = 'black', alpha = 0.25) +
-          ggplot2::geom_point(ggplot2::aes(color = color_type,shape = fA_ddg_fdr < fdr_thres)) +
+          ggplot2::geom_point(ggplot2::aes(color = color_type, shape = fA_ddg_fdr < fdr_thres)) +
           ggplot2::geom_vline(xintercept = fA_dgwt_helper,linetype = 2) +
-          # ggplot2::geom_hline(yintercept = am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value],linetype = 4) +
+          # ggplot2::geom_hline(yintercept = afB_dgwt_helper,linetype = 4) +
           ggplot2::scale_shape_manual(values = c(1, 19)) +
           ggplot2::labs(x = "dG folding state A",
               y = "dG folding state B",
@@ -604,11 +604,11 @@ dg_basic_analyses <- function(
 
       dfA_dfB_dfBsig <- ggplot2::ggplot(vd_plot,
             ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
-                y = fB_ddg + am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value])) +
+                y = fB_ddg + fB_dgwt_helper)) +
           ggplot2::geom_density2d(color = 'black', alpha = 0.25) +
           ggplot2::geom_point(ggplot2::aes(color = color_type,shape = fB_ddg_fdr < fdr_thres)) +
           # ggplot2::geom_vline(xintercept = fA_dgwt_helper,linetype = 4) +
-          ggplot2::geom_hline(yintercept = am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value],linetype = 2) +
+          ggplot2::geom_hline(yintercept = fB_dgwt_helper,linetype = 2) +
           ggplot2::scale_shape_manual(values = c(1, 19)) +
           ggplot2::labs(x = "dG folding state A",
               y = "dG folding state B",
@@ -623,11 +623,11 @@ dg_basic_analyses <- function(
 
       dfA_dfB_sig <- ggplot2::ggplot(vd_plot,
             ggplot2::aes(x = fA_ddg + fA_dgwt_helper,
-                y = fB_ddg + am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value])) +
+                y = fB_ddg + fB_dgwt_helper)) +
           ggplot2::geom_density2d(color = 'black', alpha = 0.25) +
           ggplot2::geom_point(ggplot2::aes(color = color_type,shape = fA_ddg_fdr < fdr_thres & fB_ddg_fdr < fdr_thres)) +
           ggplot2::geom_vline(xintercept = fA_dgwt_helper,linetype = 2) +
-          ggplot2::geom_hline(yintercept = am[grep(paste0("^fB", parlist[["str_bind"]][datasets_ab[2]], "_dgwt"), parameter), value],linetype = 2) +
+          ggplot2::geom_hline(yintercept = fB_dgwt_helper,linetype = 2) +
           ggplot2::scale_shape_manual(values = c(1, 19)) +
           ggplot2::labs(x = "dG folding state A",
               y = "dG folding state B",
@@ -974,7 +974,7 @@ dg_basic_analyses <- function(
       structural_properties[, list(Pos, scHAmin_ligand, RSA_unbound)],
         by = "Pos")
 
-    vd_pos1 <- reshape2::melt(vd_pos,
+    vd_pos1 <- melt(vd_pos,
       id.vars = c("Pos", "color_type", grep("ddg", names(vd_pos), value = T)),
       measure.vars = c("scHAmin_ligand", "RSA_unbound"))
     setnames(vd_pos1, "variable", "structural_property")

@@ -92,6 +92,10 @@ dg__fitness_from_model <- function(
                   )
               )
           ]
+          # only predict variants measured in the dataset and with non-zero ddGs
+          variant_data[is.na(get(paste0("f", ds, "_fitness"))) |
+              as.numeric(f_ddg_var[[1]]) == 0,
+            paste0("f", ds, "_pred") := NA]
         }
 
         if (predfit_ddgvar == TRUE & parlist[["no_folded_states"]] == 2) {
@@ -114,6 +118,10 @@ dg__fitness_from_model <- function(
                 )
               )
             ]
+            # only predict variants measured in the dataset and with non-zero ddGs
+            variant_data[is.na(get(paste0("f", ds, "_fitness"))) |
+                as.numeric(f_ddg_var_helper[[1]]) == 0,
+              paste0("f", ds, "_pred_fBasfA") := NA]
           }
 
           # predict folding fitness if folding ddg values of state A are set equal to state B
@@ -134,6 +142,10 @@ dg__fitness_from_model <- function(
                 )
               )
             ]
+            # only predict variants measured in the dataset and with non-zero ddGs
+            variant_data[is.na(get(paste0("f", ds, "_fitness"))) |
+                as.numeric(f_ddg_var_helper[[1]]) == 0,
+              paste0("f", ds, "_pred_fAasfB") := NA]
           }
 
           # predict folding fitness if only folding ddg values of state A are non-zero
@@ -154,6 +166,10 @@ dg__fitness_from_model <- function(
                 )
               )
             ]
+            # only predict variants measured in the dataset and with non-zero ddGs
+            variant_data[is.na(get(paste0("f", ds, "_fitness"))) |
+                as.numeric(f_ddg_var_helper[[1]]) == 0,
+              paste0("f", ds, "_pred_fBddg0") := NA]
           }
 
           # predict folding fitness if only folding ddg values of state A are non-zero
@@ -174,6 +190,10 @@ dg__fitness_from_model <- function(
                 )
               )
             ]
+            # only predict variants measured in the dataset and with non-zero ddGs
+            variant_data[is.na(get(paste0("f", ds, "_fitness"))) |
+                as.numeric(f_ddg_var_helper[[2]]) == 0,
+              paste0("f", ds, "_pred_fAddg0") := NA]
           }
         }
 
@@ -224,6 +244,10 @@ dg__fitness_from_model <- function(
                 )
             )
         ]
+        # only predict variants measured in the dataset and with non-zero ddGs
+        variant_data[is.na(get(paste0("b", ds, "_fitness"))) |
+              as.numeric(f_ddg_var[[1]]) == 0 | as.numeric(b_ddg_var) == 0,
+            paste0("b", ds, "_pred") := NA]
       }
 
       if (predfit_ddgvar == TRUE) {
@@ -243,6 +267,10 @@ dg__fitness_from_model <- function(
               )
             )
           ]
+          # only predict variants measured in the dataset and with non-zero ddGs
+          variant_data[is.na(get(paste0("b", ds, "_fitness"))) |
+                as.numeric(f_ddg_var[[1]]) == 0,
+              paste0("b", ds, "_pred_bddg0") := NA]
         }
 
         # predict binding fitness when only binding ddg values are non-zero
@@ -260,6 +288,10 @@ dg__fitness_from_model <- function(
               )
             )
           ]
+            # only predict variants measured in the dataset and with non-zero ddGs
+          variant_data[is.na(get(paste0("b", ds, "_fitness"))) |
+                as.numeric(b_ddg_var) == 0,
+              paste0("b", ds, "_pred_fddg0") := NA]
         }
 
         if (parlist[["no_folded_states"]] == 2) {
@@ -284,6 +316,10 @@ dg__fitness_from_model <- function(
                 )
               )
             ]
+            # only predict variants measured in the dataset and with non-zero ddGs
+            variant_data[is.na(get(paste0("b", ds, "_fitness"))) |
+                  as.numeric(f_ddg_var_helper[[1]]) == 0,
+                paste0("b", ds, "_pred_fBasfA") := NA]
           }
 
           # predict folding fitness if folding ddg values of state A are set equal to state B
@@ -306,6 +342,10 @@ dg__fitness_from_model <- function(
                 )
               )
             ]
+            # only predict variants measured in the dataset and with non-zero ddGs
+            variant_data[is.na(get(paste0("b", ds, "_fitness"))) |
+                  as.numeric(f_ddg_var_helper[[1]]) == 0,
+                paste0("b", ds, "_pred_fAasfB") := NA]
           }
 
           # predict folding fitness if only folding ddg values of state A are non-zero
@@ -328,6 +368,10 @@ dg__fitness_from_model <- function(
                 )
               )
             ]
+            # only predict variants measured in the dataset and with non-zero ddGs
+            variant_data[is.na(get(paste0("b", ds, "_fitness"))) |
+                  as.numeric(f_ddg_var_helper[[1]]) == 0,
+                paste0("b", ds, "_pred_fBddg0") := NA]
           }
 
           # predict folding fitness if only folding ddg values of state A are non-zero
@@ -350,6 +394,10 @@ dg__fitness_from_model <- function(
                 )
               )
             ]
+            # only predict variants measured in the dataset and with non-zero ddGs
+            variant_data[is.na(get(paste0("b", ds, "_fitness"))) |
+                  as.numeric(f_ddg_var_helper[[2]]) == 0,
+                paste0("b", ds, "_pred_fAddg0") := NA]
           }
         }
       }
